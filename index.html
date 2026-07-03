@@ -58,16 +58,16 @@
       const [showAfterTax, setShowAfterTax] = useState(false);
       const [stateTaxRatePct, setStateTaxRatePct] = useState(13.3);
       
-      // Updated: May 6, 2026 (latest data from issuer websites)
+      // Verified & Updated: July 2026 data from issuer disclosures
       const products = [
-        { ticker: 'USFR', yieldPct: 3.61, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-05-04', durationYears: 0.02, stateExemptPct: 100, provider: 'WisdomTree', sourceUrl: 'https://www.wisdomtree.com/investments/etfs/fixed-income/usfr' },
-        { ticker: 'SGOV', yieldPct: 3.55, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-05-04', durationYears: 0.12, stateExemptPct: 100, provider: 'BlackRock', sourceUrl: 'https://www.ishares.com/us/products/314116' },
-        { ticker: 'BIL', yieldPct: 4.01, yieldLabel: 'Yield', yieldAsOf: '2026-05-04', durationYears: 0.10, stateExemptPct: 100, provider: 'SSGA', sourceUrl: 'https://www.ssga.com/us/en/individual/etfs/funds/bil' },
-        { ticker: 'XONE', yieldPct: 3.64, yieldLabel: 'SEC 30-Day', yieldAsOf: '2025-11-28', durationYears: 0.94, stateExemptPct: 100, provider: 'BondBloxx', sourceUrl: 'https://bondbloxxetf.com/funds/xone/' },
-        { ticker: 'FTSD', yieldPct: 4.54, yieldLabel: 'Trailing Yield', yieldAsOf: '2026-05-04', durationYears: 1.37, stateExemptPct: 100, provider: 'Franklin', sourceUrl: 'https://www.franklintempleton.com/investments/options/exchange-traded-funds/products/23510' },
-        { ticker: 'FTSM', yieldPct: 3.85, yieldLabel: 'SEC 30-Day', yieldAsOf: '2025-12-15', durationYears: 0.64, stateExemptPct: 30, provider: 'First Trust', sourceUrl: 'https://www.ftportfolios.com/retail/etf/etfsummary.aspx?Ticker=FTSM' },
-        { ticker: 'NEAR', yieldPct: 4.15, yieldLabel: 'SEC 30-Day', yieldAsOf: '2025-12-18', durationYears: 2.19, stateExemptPct: 0, provider: 'BlackRock', sourceUrl: 'https://www.ishares.com/us/products/239825' },
-        { ticker: 'BOXX', yieldPct: 4.16, yieldLabel: 'Trailing Total Return', yieldAsOf: '2026-05-04', durationYears: 0.00, stateExemptPct: 0, provider: 'Alpha Architect', sourceUrl: 'https://funds.alphaarchitect.com/boxetf/' },
+        { ticker: 'USFR', yieldPct: 3.61, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-02', durationYears: 0.02, stateExemptPct: 100, provider: 'WisdomTree', sourceUrl: 'https://www.wisdomtree.com/investments/etfs/fixed-income/usfr' },
+        { ticker: 'SGOV', yieldPct: 3.56, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 0.11, stateExemptPct: 100, provider: 'BlackRock', sourceUrl: 'https://www.ishares.com/us/products/314116' },
+        { ticker: 'BIL', yieldPct: 3.85, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 0.10, stateExemptPct: 100, provider: 'SSGA', sourceUrl: 'https://www.ssga.com/us/en/individual/etfs/funds/bil' },
+        { ticker: 'XONE', yieldPct: 3.84, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-05-29', durationYears: 0.99, stateExemptPct: 100, provider: 'BondBloxx', sourceUrl: 'https://bondbloxxetf.com/funds/xone/' },
+        { ticker: 'FTSD', yieldPct: 3.95, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 1.50, stateExemptPct: 100, provider: 'Franklin', sourceUrl: 'https://www.franklintempleton.com/investments/options/exchange-traded-funds/products/23510' },
+        { ticker: 'FTSM', yieldPct: 4.08, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 0.64, stateExemptPct: 30, provider: 'First Trust', sourceUrl: 'https://www.ftportfolios.com/retail/etf/etfsummary.aspx?Ticker=FTSM' },
+        { ticker: 'NEAR', yieldPct: 4.20, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 2.22, stateExemptPct: 0, provider: 'BlackRock', sourceUrl: 'https://www.ishares.com/us/products/239825' },
+        { ticker: 'BOXX', yieldPct: 4.60, yieldLabel: 'Yield to Expiration', yieldAsOf: '2026-06-30', durationYears: 0.76, stateExemptPct: 0, provider: 'Alpha Architect', sourceUrl: 'https://funds.alphaarchitect.com/boxetf/' },
       ];
 
       const enrichedProducts = useMemo(() => {
@@ -165,7 +165,7 @@
               Fixed Income Products Snapshot
             </h1>
             <div style={{ fontSize: '14px', color: '#666', fontStyle: 'italic' }}>
-              Ultra-Short Duration ETFs with State Tax Optimization • Updated May 6, 2026
+              Ultra-Short Duration ETFs with State Tax Optimization • Updated July 2026
             </div>
           </div>
 
@@ -441,7 +441,7 @@
               After-tax yield = Pre-tax yield × (1 - State tax rate × (1 - Exemption %))
             </p>
             <p style={{ margin: '0' }}>
-              <strong>Data Sources:</strong> Yields from individual fund issuers as of dates noted. 
+              <strong>Data Sources:</strong> Yields updated from individual fund issuer disclosures as of July 2026. 
               Not investment advice. Past performance does not guarantee future results.
             </p>
           </div>
