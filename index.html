@@ -57,28 +57,44 @@
       const [view, setView] = useState('yield');
       const [showAfterTax, setShowAfterTax] = useState(false);
       const [stateTaxRatePct, setStateTaxRatePct] = useState(13.3);
+      const [categoryFilter, setCategoryFilter] = useState('All');
       
       // Verified & Updated: July 2026 data from issuer disclosures
       const products = [
-        { ticker: 'USFR', yieldPct: 3.61, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-02', durationYears: 0.02, stateExemptPct: 100, provider: 'WisdomTree', sourceUrl: 'https://www.wisdomtree.com/investments/etfs/fixed-income/usfr' },
-        { ticker: 'SGOV', yieldPct: 3.56, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 0.11, stateExemptPct: 100, provider: 'BlackRock', sourceUrl: 'https://www.ishares.com/us/products/314116' },
-        { ticker: 'BIL', yieldPct: 3.85, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 0.10, stateExemptPct: 100, provider: 'SSGA', sourceUrl: 'https://www.ssga.com/us/en/individual/etfs/funds/bil' },
-        { ticker: 'XONE', yieldPct: 3.84, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-05-29', durationYears: 0.99, stateExemptPct: 100, provider: 'BondBloxx', sourceUrl: 'https://bondbloxxetf.com/funds/xone/' },
-        { ticker: 'FTSD', yieldPct: 3.95, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 1.50, stateExemptPct: 100, provider: 'Franklin', sourceUrl: 'https://www.franklintempleton.com/investments/options/exchange-traded-funds/products/23510' },
-        { ticker: 'FTSM', yieldPct: 4.08, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 0.64, stateExemptPct: 30, provider: 'First Trust', sourceUrl: 'https://www.ftportfolios.com/retail/etf/etfsummary.aspx?Ticker=FTSM' },
-        { ticker: 'NEAR', yieldPct: 4.20, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 2.22, stateExemptPct: 0, provider: 'BlackRock', sourceUrl: 'https://www.ishares.com/us/products/239825' },
-        { ticker: 'BOXX', yieldPct: 4.60, yieldLabel: 'Yield to Expiration', yieldAsOf: '2026-06-30', durationYears: 0.76, stateExemptPct: 0, provider: 'Alpha Architect', sourceUrl: 'https://funds.alphaarchitect.com/boxetf/' },
+        { ticker: 'USFR', category: 'Treasury / T-Bill', yieldPct: 3.61, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-02', durationYears: 0.02, stateExemptPct: 100, provider: 'WisdomTree', sourceUrl: 'https://www.wisdomtree.com/investments/etfs/fixed-income/usfr' },
+        { ticker: 'TFLO', category: 'Treasury / T-Bill', yieldPct: 3.63, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 0.01, stateExemptPct: 100, provider: 'BlackRock', sourceUrl: 'https://www.ishares.com/us/products/264620' },
+        { ticker: 'SGOV', category: 'Treasury / T-Bill', yieldPct: 3.56, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 0.11, stateExemptPct: 100, provider: 'BlackRock', sourceUrl: 'https://www.ishares.com/us/products/314116' },
+        { ticker: 'SHV', category: 'Treasury / T-Bill', yieldPct: 3.57, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 0.27, stateExemptPct: 100, provider: 'BlackRock', sourceUrl: 'https://www.ishares.com/us/products/239458' },
+        { ticker: 'BIL', category: 'Treasury / T-Bill', yieldPct: 3.85, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 0.10, stateExemptPct: 100, provider: 'SSGA', sourceUrl: 'https://www.ssga.com/us/en/individual/etfs/funds/bil' },
+        { ticker: 'TBIL', category: 'Treasury / T-Bill', yieldPct: 3.54, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-06-30', durationYears: 0.25, stateExemptPct: 100, provider: 'F/m Investments', sourceUrl: 'https://ustreasuryetf.com/etf/tbil/' },
+        { ticker: 'XONE', category: 'Treasury / T-Bill', yieldPct: 3.84, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-05-29', durationYears: 0.99, stateExemptPct: 100, provider: 'BondBloxx', sourceUrl: 'https://bondbloxxetf.com/funds/xone/' },
+        { ticker: 'FTSD', category: 'Treasury / T-Bill', yieldPct: 3.95, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 1.50, stateExemptPct: 100, provider: 'Franklin', sourceUrl: 'https://www.franklintempleton.com/investments/options/exchange-traded-funds/products/23510' },
+        
+        { ticker: 'JPST', category: 'Active / Corporate', yieldPct: 4.07, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 0.83, stateExemptPct: 0, provider: 'JPMorgan', sourceUrl: 'https://am.jpmorgan.com/us/en/asset-management/adv/products/jpmorgan-ultra-short-income-etf-46637K880' },
+        { ticker: 'FLOT', category: 'Active / Corporate', yieldPct: 4.01, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 0.01, stateExemptPct: 0, provider: 'BlackRock', sourceUrl: 'https://www.ishares.com/us/products/239534' },
+        { ticker: 'MINT', category: 'Active / Corporate', yieldPct: 3.86, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 0.35, stateExemptPct: 0, provider: 'PIMCO', sourceUrl: 'https://www.pimco.com/en-us/investments/etf/enhanced-short-maturity-active-exchange-traded-fund/usd' },
+        { ticker: 'FTSM', category: 'Active / Corporate', yieldPct: 4.08, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 0.64, stateExemptPct: 30, provider: 'First Trust', sourceUrl: 'https://www.ftportfolios.com/retail/etf/etfsummary.aspx?Ticker=FTSM' },
+        { ticker: 'NEAR', category: 'Active / Corporate', yieldPct: 4.20, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 2.22, stateExemptPct: 0, provider: 'BlackRock', sourceUrl: 'https://www.ishares.com/us/products/239825' },
+        
+        { ticker: 'BOXX', category: 'Synthetic / Box', yieldPct: 4.60, yieldLabel: 'Yield to Expiration', yieldAsOf: '2026-06-30', durationYears: 0.76, stateExemptPct: 0, provider: 'Alpha Architect', sourceUrl: 'https://funds.alphaarchitect.com/boxetf/' },
+        { ticker: 'SUB', category: 'Municipal', yieldPct: 2.55, yieldLabel: 'SEC 30-Day (Tax-Eq 4.31%)', yieldAsOf: '2026-07-01', durationYears: 1.86, stateExemptPct: 100, provider: 'BlackRock', sourceUrl: 'https://www.ishares.com/us/products/239466' },
       ];
 
+      const filteredProducts = useMemo(() => {
+        if (categoryFilter === 'All') return products;
+        return products.filter(p => p.category === categoryFilter);
+      }, [categoryFilter]);
+
       const enrichedProducts = useMemo(() => {
-        return products.map(p => {
+        return filteredProducts.map(p => {
           const stateTaxRate = stateTaxRatePct / 100;
           const afterTaxYield = p.yieldPct * (1 - stateTaxRate * (1 - p.stateExemptPct / 100));
           return { ...p, afterTaxYield };
         });
-      }, [stateTaxRatePct]);
+      }, [filteredProducts, stateTaxRatePct]);
 
       const bestChoice = useMemo(() => {
+        if (enrichedProducts.length === 0) return null;
         const sorted = [...enrichedProducts].sort((a, b) => {
           const yieldA = showAfterTax ? a.afterTaxYield : a.yieldPct;
           const yieldB = showAfterTax ? b.afterTaxYield : b.yieldPct;
@@ -92,14 +108,14 @@
           return enrichedProducts.map(p => ({
             ticker: p.ticker,
             yield: showAfterTax ? p.afterTaxYield : p.yieldPct,
-            isBest: p.ticker === bestChoice.ticker,
+            isBest: bestChoice && p.ticker === bestChoice.ticker,
             fullData: p
           }));
         } else {
           return enrichedProducts.map(p => ({
             ticker: p.ticker,
             duration: p.durationYears || 0,
-            isBest: p.ticker === bestChoice.ticker,
+            isBest: bestChoice && p.ticker === bestChoice.ticker,
             fullData: p
           }));
         }
@@ -119,7 +135,7 @@
             maxWidth: '280px'
           }}>
             <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#006400' }}>
-              {data.ticker} ({data.provider})
+              {data.ticker} ({data.provider}) • {data.category}
             </div>
             <div style={{ marginBottom: '4px' }}>
               <strong>Yield:</strong> {data.yieldPct.toFixed(2)}% ({data.yieldLabel})
@@ -165,14 +181,14 @@
               Fixed Income Products Snapshot
             </h1>
             <div style={{ fontSize: '14px', color: '#666', fontStyle: 'italic' }}>
-              Ultra-Short Duration ETFs with State Tax Optimization • Updated July 2026
+              Ultra-Short & Short-Duration ETFs (15 Key Funds) • Updated July 2026
             </div>
           </div>
 
           {/* Controls */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
             gap: '16px',
             marginBottom: '24px',
             padding: '16px',
@@ -180,6 +196,31 @@
             border: '1px solid #2C5F7D',
             borderRadius: '4px'
           }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px', color: '#2C5F7D' }}>
+                Category Filter
+              </label>
+              <select 
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  fontSize: '14px',
+                  fontFamily: 'Times New Roman, serif',
+                  border: '1px solid #2C5F7D',
+                  borderRadius: '2px',
+                  backgroundColor: 'white'
+                }}
+              >
+                <option value="All">All Categories (15 Funds)</option>
+                <option value="Treasury / T-Bill">Treasury & T-Bills</option>
+                <option value="Active / Corporate">Active & Corporate</option>
+                <option value="Synthetic / Box">Synthetic / Box Spread</option>
+                <option value="Municipal">Municipal (Tax-Exempt)</option>
+              </select>
+            </div>
+
             <div>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px', color: '#2C5F7D' }}>
                 View Type
@@ -245,7 +286,7 @@
           </div>
 
           {/* Best Choice Banner */}
-          {view === 'yield' && (
+          {view === 'yield' && bestChoice && (
             <div style={{
               padding: '16px',
               backgroundColor: '#E8F5E9',
@@ -257,7 +298,7 @@
                 <IconShield size={24} color="#2E7D32" />
                 <div>
                   <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#2E7D32' }}>
-                    Best Choice: {bestChoice.ticker} ({bestChoice.provider})
+                    Top Yielding Choice ({categoryFilter}): {bestChoice.ticker} ({bestChoice.provider})
                   </div>
                   <div style={{ fontSize: '13px', color: '#1B5E20' }}>
                     {showAfterTax 
@@ -294,7 +335,7 @@
               )}
             </h2>
             
-            <ResponsiveContainer width="100%" height={400}>
+            <ResponsiveContainer width="100%" height={420}>
               <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" />
                 <XAxis 
@@ -345,7 +386,7 @@
               alignItems: 'center',
               gap: '8px'
             }}>
-              <IconDatabase size={20} /> Detailed Comparison
+              <IconDatabase size={20} /> Detailed Comparison ({enrichedProducts.length} Funds)
             </h2>
             
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
@@ -353,6 +394,7 @@
                 <tr style={{ backgroundColor: '#F5F5DC', borderBottom: '2px solid #2C5F7D' }}>
                   <th style={{ padding: '10px', textAlign: 'left', color: '#2C5F7D', fontWeight: 'bold' }}>Ticker</th>
                   <th style={{ padding: '10px', textAlign: 'left', color: '#2C5F7D', fontWeight: 'bold' }}>Provider</th>
+                  <th style={{ padding: '10px', textAlign: 'left', color: '#2C5F7D', fontWeight: 'bold' }}>Category</th>
                   <th style={{ padding: '10px', textAlign: 'right', color: '#2C5F7D', fontWeight: 'bold' }}>Yield</th>
                   {showAfterTax && (
                     <th style={{ padding: '10px', textAlign: 'right', color: '#8B0000', fontWeight: 'bold' }}>After-Tax</th>
@@ -370,7 +412,7 @@
                     return valB - valA;
                   })
                   .map((p, idx) => {
-                    const isBest = p.ticker === bestChoice.ticker;
+                    const isBest = bestChoice && p.ticker === bestChoice.ticker;
                     return (
                       <tr 
                         key={p.ticker}
@@ -394,6 +436,7 @@
                           </a>
                         </td>
                         <td style={{ padding: '10px' }}>{p.provider}</td>
+                        <td style={{ padding: '10px', fontSize: '12px', color: '#555' }}>{p.category}</td>
                         <td style={{ padding: '10px', textAlign: 'right', fontFamily: 'monospace' }}>
                           {p.yieldPct.toFixed(2)}%
                         </td>
@@ -403,7 +446,7 @@
                           </td>
                         )}
                         <td style={{ padding: '10px', textAlign: 'right', fontFamily: 'monospace' }}>
-                          {p.durationYears ? p.durationYears.toFixed(2) : 'N/A'}
+                          {p.durationYears !== undefined ? p.durationYears.toFixed(2) : 'N/A'}
                         </td>
                         <td style={{ padding: '10px', textAlign: 'center' }}>
                           <span style={{
