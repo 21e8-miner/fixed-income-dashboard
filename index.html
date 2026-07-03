@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fixed Income Products Snapshot Dashboard</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js" crossorigin></script>
+  <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f4f6f8;
+      font-family: 'Times New Roman', Times, serif;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useMemo } = React;
+    const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } = Recharts;
+
+    const IconTrendingUp = ({ size = 20, color = 'currentColor' }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+        <polyline points="16 7 22 7 22 13"/>
+      </svg>
+    );
+
+    const IconClock = ({ size = 20, color = 'currentColor' }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="12 6 12 12 16 14"/>
+      </svg>
+    );
+
+    const IconShield = ({ size = 24, color = 'currentColor' }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+        <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
+      </svg>
+    );
+
+    const IconDatabase = ({ size = 20, color = 'currentColor' }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+        <ellipse cx="12" cy="5" rx="9" ry="3"/>
+        <path d="M3 5V19A9 3 0 0 0 21 19V5"/>
+        <path d="M3 12A9 3 0 0 0 21 12"/>
+      </svg>
+    );
+
+    const FixedIncomeDashboard = () => {
+      const [view, setView] = useState('yield');
+      const [showAfterTax, setShowAfterTax] = useState(false);
+      const [stateTaxRatePct, setStateTaxRatePct] = useState(13.3);
+      
+      // Updated: May 6, 2026 (latest data from issuer websites)
+      const products = [
+        { ticker: 'USFR', yieldPct: 3.61, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-05-04', durationYears: 0.02, stateExemptPct: 100, provider: 'WisdomTree', sourceUrl: 'https://www.wisdomtree.com/investments/etfs/fixed-income/usfr' },
+        { ticker: 'SGOV', yieldPct: 3.55, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-05-04', durationYears: 0.12, stateExemptPct: 100, provider: 'BlackRock', sourceUrl: 'https://www.ishares.com/us/products/314116' },
+        { ticker: 'BIL', yieldPct: 4.01, yieldLabel: 'Yield', yieldAsOf: '2026-05-04', durationYears: 0.10, stateExemptPct: 100, provider: 'SSGA', sourceUrl: 'https://www.ssga.com/us/en/individual/etfs/funds/bil' },
+        { ticker: 'XONE', yieldPct: 3.64, yieldLabel: 'SEC 30-Day', yieldAsOf: '2025-11-28', durationYears: 0.94, stateExemptPct: 100, provider: 'BondBloxx', sourceUrl: 'https://bondbloxxetf.com/funds/xone/' },
+        { ticker: 'FTSD', yieldPct: 4.54, yieldLabel: 'Trailing Yield', yieldAsOf: '2026-05-04', durationYears: 1.37, stateExemptPct: 100, provider: 'Franklin', sourceUrl: 'https://www.franklintempleton.com/investments/options/exchange-traded-funds/products/23510' },
+        { ticker: 'FTSM', yieldPct: 3.85, yieldLabel: 'SEC 30-Day', yieldAsOf: '2025-12-15', durationYears: 0.64, stateExemptPct: 30, provider: 'First Trust', sourceUrl: 'https://www.ftportfolios.com/retail/etf/etfsummary.aspx?Ticker=FTSM' },
+        { ticker: 'NEAR', yieldPct: 4.15, yieldLabel: 'SEC 30-Day', yieldAsOf: '2025-12-18', durationYears: 2.19, stateExemptPct: 0, provider: 'BlackRock', sourceUrl: 'https://www.ishares.com/us/products/239825' },
+        { ticker: 'BOXX', yieldPct: 4.16, yieldLabel: 'Trailing Total Return', yieldAsOf: '2026-05-04', durationYears: 0.00, stateExemptPct: 0, provider: 'Alpha Architect', sourceUrl: 'https://funds.alphaarchitect.com/boxetf/' },
+      ];
+
+      const enrichedProducts = useMemo(() => {
+        return products.map(p => {
+          const stateTaxRate = stateTaxRatePct / 100;
+          const afterTaxYield = p.yieldPct * (1 - stateTaxRate * (1 - p.stateExemptPct / 100));
+          return { ...p, afterTaxYield };
+        });
+      }, [stateTaxRatePct]);
+
+      const bestChoice = useMemo(() => {
+        const sorted = [...enrichedProducts].sort((a, b) => {
+          const yieldA = showAfterTax ? a.afterTaxYield : a.yieldPct;
+          const yieldB = showAfterTax ? b.afterTaxYield : b.yieldPct;
+          return yieldB - yieldA;
+        });
+        return sorted[0];
+      }, [enrichedProducts, showAfterTax]);
+
+      const chartData = useMemo(() => {
+        if (view === 'yield') {
+          return enrichedProducts.map(p => ({
+            ticker: p.ticker,
+            yield: showAfterTax ? p.afterTaxYield : p.yieldPct,
+            isBest: p.ticker === bestChoice.ticker,
+            fullData: p
+          }));
+        } else {
+          return enrichedProducts.map(p => ({
+            ticker: p.ticker,
+            duration: p.durationYears || 0,
+            isBest: p.ticker === bestChoice.ticker,
+            fullData: p
+          }));
+        }
+      }, [enrichedProducts, view, showAfterTax, bestChoice]);
+
+      const CustomTooltip = ({ active, payload }) => {
+        if (!active || !payload || !payload[0]) return null;
+        const data = payload[0].payload.fullData;
+        
+        return (
+          <div style={{
+            backgroundColor: '#FFFEF5',
+            border: '2px solid #2C5F7D',
+            padding: '12px',
+            fontFamily: 'Times New Roman, serif',
+            fontSize: '13px',
+            maxWidth: '280px'
+          }}>
+            <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#006400' }}>
+              {data.ticker} ({data.provider})
+            </div>
+            <div style={{ marginBottom: '4px' }}>
+              <strong>Yield:</strong> {data.yieldPct.toFixed(2)}% ({data.yieldLabel})
+            </div>
+            {showAfterTax && (
+              <div style={{ marginBottom: '4px', color: '#8B0000' }}>
+                <strong>After-Tax:</strong> {data.afterTaxYield.toFixed(2)}%
+              </div>
+            )}
+            <div style={{ marginBottom: '4px' }}>
+              <strong>Duration:</strong> {data.durationYears ? `${data.durationYears.toFixed(2)} yrs` : 'N/A'}
+            </div>
+            <div style={{ marginBottom: '4px' }}>
+              <strong>State Tax Status:</strong> {data.stateExemptPct === 100 ? 'Fully Exempt' : data.stateExemptPct === 0 ? 'Fully Taxable' : `${data.stateExemptPct}% Exempt`}
+            </div>
+            <div style={{ fontSize: '11px', color: '#666' }}>
+              As of {data.yieldAsOf}
+            </div>
+          </div>
+        );
+      };
+
+      return (
+        <div style={{
+          maxWidth: '1200px',
+          margin: '0 auto',
+          padding: '24px',
+          backgroundColor: '#FFFEF5',
+          fontFamily: 'Times New Roman, serif',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+          marginTop: '20px',
+          marginBottom: '20px',
+          borderRadius: '4px'
+        }}>
+          {/* Header */}
+          <div style={{ marginBottom: '32px', borderBottom: '3px solid #2C5F7D', paddingBottom: '16px' }}>
+            <h1 style={{
+              fontSize: '32px',
+              fontWeight: 'bold',
+              color: '#2C5F7D',
+              margin: '0 0 8px 0'
+            }}>
+              Fixed Income Products Snapshot
+            </h1>
+            <div style={{ fontSize: '14px', color: '#666', fontStyle: 'italic' }}>
+              Ultra-Short Duration ETFs with State Tax Optimization • Updated May 6, 2026
+            </div>
+          </div>
+
+          {/* Controls */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '16px',
+            marginBottom: '24px',
+            padding: '16px',
+            backgroundColor: '#F5F5DC',
+            border: '1px solid #2C5F7D',
+            borderRadius: '4px'
+          }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px', color: '#2C5F7D' }}>
+                View Type
+              </label>
+              <select 
+                value={view}
+                onChange={(e) => setView(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  fontSize: '14px',
+                  fontFamily: 'Times New Roman, serif',
+                  border: '1px solid #2C5F7D',
+                  borderRadius: '2px',
+                  backgroundColor: 'white'
+                }}
+              >
+                <option value="yield">Yield Comparison</option>
+                <option value="duration">Duration Analysis</option>
+              </select>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px', color: '#2C5F7D' }}>
+                State Tax Rate (%)
+              </label>
+              <input
+                type="number"
+                value={stateTaxRatePct}
+                onChange={(e) => setStateTaxRatePct(Math.max(0, Math.min(20, parseFloat(e.target.value) || 0)))}
+                min="0"
+                max="20"
+                step="0.1"
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  fontSize: '14px',
+                  fontFamily: 'Times New Roman, serif',
+                  border: '1px solid #2C5F7D',
+                  borderRadius: '2px'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                color: '#2C5F7D'
+              }}>
+                <input
+                  type="checkbox"
+                  checked={showAfterTax}
+                  onChange={(e) => setShowAfterTax(e.target.checked)}
+                  style={{ marginRight: '8px', cursor: 'pointer' }}
+                />
+                Show After-Tax Yields
+              </label>
+            </div>
+          </div>
+
+          {/* Best Choice Banner */}
+          {view === 'yield' && (
+            <div style={{
+              padding: '16px',
+              backgroundColor: '#E8F5E9',
+              border: '2px solid #2E7D32',
+              borderRadius: '4px',
+              marginBottom: '24px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <IconShield size={24} color="#2E7D32" />
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#2E7D32' }}>
+                    Best Choice: {bestChoice.ticker} ({bestChoice.provider})
+                  </div>
+                  <div style={{ fontSize: '13px', color: '#1B5E20' }}>
+                    {showAfterTax 
+                      ? `${bestChoice.afterTaxYield.toFixed(2)}% after-tax yield (${stateTaxRatePct}% state rate)`
+                      : `${bestChoice.yieldPct.toFixed(2)}% pre-tax yield`
+                    } • {bestChoice.stateExemptPct === 100 ? 'State tax-exempt' : bestChoice.stateExemptPct === 0 ? 'Fully taxable' : `${bestChoice.stateExemptPct}% exempt`}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Chart */}
+          <div style={{
+            backgroundColor: 'white',
+            border: '2px solid #2C5F7D',
+            borderRadius: '4px',
+            padding: '24px',
+            marginBottom: '24px'
+          }}>
+            <h2 style={{
+              fontSize: '18px',
+              fontWeight: 'bold',
+              color: '#2C5F7D',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              {view === 'yield' ? (
+                <><IconTrendingUp size={20} /> Yield Comparison</>
+              ) : (
+                <><IconClock size={20} /> Duration Risk</>
+              )}
+            </h2>
+            
+            <ResponsiveContainer width="100%" height={400}>
+              <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" />
+                <XAxis 
+                  dataKey="ticker" 
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
+                  tick={{ fill: '#2C5F7D', fontSize: 13, fontFamily: 'Times New Roman, serif' }}
+                />
+                <YAxis 
+                  tick={{ fill: '#2C5F7D', fontSize: 13, fontFamily: 'Times New Roman, serif' }}
+                  label={{ 
+                    value: view === 'yield' ? 'Yield (%)' : 'Duration (years)', 
+                    angle: -90, 
+                    position: 'insideLeft',
+                    style: { fill: '#2C5F7D', fontSize: 13, fontFamily: 'Times New Roman, serif' }
+                  }}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey={view === 'yield' ? 'yield' : 'duration'} radius={[4, 4, 0, 0]}>
+                  {chartData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`}
+                      fill={entry.isBest ? '#2E7D32' : '#2C5F7D'}
+                      stroke={entry.isBest ? '#1B5E20' : '#1A4F66'}
+                      strokeWidth={entry.isBest ? 2 : 1}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Data Table */}
+          <div style={{
+            backgroundColor: 'white',
+            border: '2px solid #2C5F7D',
+            borderRadius: '4px',
+            padding: '16px',
+            overflowX: 'auto'
+          }}>
+            <h2 style={{
+              fontSize: '18px',
+              fontWeight: 'bold',
+              color: '#2C5F7D',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <IconDatabase size={20} /> Detailed Comparison
+            </h2>
+            
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#F5F5DC', borderBottom: '2px solid #2C5F7D' }}>
+                  <th style={{ padding: '10px', textAlign: 'left', color: '#2C5F7D', fontWeight: 'bold' }}>Ticker</th>
+                  <th style={{ padding: '10px', textAlign: 'left', color: '#2C5F7D', fontWeight: 'bold' }}>Provider</th>
+                  <th style={{ padding: '10px', textAlign: 'right', color: '#2C5F7D', fontWeight: 'bold' }}>Yield</th>
+                  {showAfterTax && (
+                    <th style={{ padding: '10px', textAlign: 'right', color: '#8B0000', fontWeight: 'bold' }}>After-Tax</th>
+                  )}
+                  <th style={{ padding: '10px', textAlign: 'right', color: '#2C5F7D', fontWeight: 'bold' }}>Duration</th>
+                  <th style={{ padding: '10px', textAlign: 'center', color: '#2C5F7D', fontWeight: 'bold' }}>State Tax</th>
+                  <th style={{ padding: '10px', textAlign: 'left', color: '#2C5F7D', fontWeight: 'bold' }}>As Of</th>
+                </tr>
+              </thead>
+              <tbody>
+                {enrichedProducts
+                  .sort((a, b) => {
+                    const valA = showAfterTax ? a.afterTaxYield : a.yieldPct;
+                    const valB = showAfterTax ? b.afterTaxYield : b.yieldPct;
+                    return valB - valA;
+                  })
+                  .map((p, idx) => {
+                    const isBest = p.ticker === bestChoice.ticker;
+                    return (
+                      <tr 
+                        key={p.ticker}
+                        style={{
+                          backgroundColor: isBest ? '#E8F5E9' : idx % 2 === 0 ? 'white' : '#FAFAFA',
+                          borderBottom: '1px solid #E0E0E0',
+                          borderLeft: isBest ? '4px solid #2E7D32' : 'none'
+                        }}
+                      >
+                        <td style={{ padding: '10px', fontWeight: isBest ? 'bold' : 'normal' }}>
+                          <a 
+                            href={p.sourceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: '#2C5F7D', textDecoration: 'none' }}
+                            onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
+                            onMouseOut={(e) => e.target.style.textDecoration = 'none'}
+                          >
+                            {p.ticker}
+                            {isBest && <span style={{ marginLeft: '4px', color: '#2E7D32' }}>★</span>}
+                          </a>
+                        </td>
+                        <td style={{ padding: '10px' }}>{p.provider}</td>
+                        <td style={{ padding: '10px', textAlign: 'right', fontFamily: 'monospace' }}>
+                          {p.yieldPct.toFixed(2)}%
+                        </td>
+                        {showAfterTax && (
+                          <td style={{ padding: '10px', textAlign: 'right', fontFamily: 'monospace', color: '#8B0000' }}>
+                            {p.afterTaxYield.toFixed(2)}%
+                          </td>
+                        )}
+                        <td style={{ padding: '10px', textAlign: 'right', fontFamily: 'monospace' }}>
+                          {p.durationYears ? p.durationYears.toFixed(2) : 'N/A'}
+                        </td>
+                        <td style={{ padding: '10px', textAlign: 'center' }}>
+                          <span style={{
+                            padding: '4px 8px',
+                            borderRadius: '3px',
+                            fontSize: '11px',
+                            backgroundColor: p.stateExemptPct === 100 ? '#E8F5E9' : p.stateExemptPct === 0 ? '#FFEBEE' : '#FFF9C4',
+                            color: p.stateExemptPct === 100 ? '#2E7D32' : p.stateExemptPct === 0 ? '#C62828' : '#F57F17'
+                          }}>
+                            {p.stateExemptPct === 100 ? 'Exempt' : p.stateExemptPct === 0 ? 'Taxable' : `${p.stateExemptPct}%`}
+                          </span>
+                        </td>
+                        <td style={{ padding: '10px', fontSize: '12px', color: '#666' }}>
+                          {p.yieldAsOf}
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Footer */}
+          <div style={{
+            marginTop: '24px',
+            padding: '16px',
+            backgroundColor: '#F5F5DC',
+            border: '1px solid #2C5F7D',
+            borderRadius: '4px',
+            fontSize: '12px',
+            color: '#666'
+          }}>
+            <p style={{ margin: '0 0 8px 0' }}>
+              <strong>Methodology:</strong> State tax exemption percentages sourced from issuer tax reporting (1099-DIV). 
+              After-tax yield = Pre-tax yield × (1 - State tax rate × (1 - Exemption %))
+            </p>
+            <p style={{ margin: '0' }}>
+              <strong>Data Sources:</strong> Yields from individual fund issuers as of dates noted. 
+              Not investment advice. Past performance does not guarantee future results.
+            </p>
+          </div>
+        </div>
+      );
+    };
+
+    const rootElement = document.getElementById('root');
+    const root = ReactDOM.createRoot(rootElement);
+    root.render(<FixedIncomeDashboard />);
+  </script>
+</body>
+</html>
