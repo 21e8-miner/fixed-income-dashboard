@@ -165,7 +165,7 @@
   </div>
 
   <div class="footer">
-    <p><strong>Sources.</strong> Stated yields from issuer fund pages; live prices from Yahoo via local quote backend (WisdomTree, iShares/BlackRock, State Street, BondBloxx, Franklin Templeton, First Trust, Alpha Architect, FPA). Yields and durations move daily; confirm against the issuer page before trading.</p>
+    <p><strong>Sources.</strong> Stated yields auto-updated weekdays via GitHub Action (Yahoo fund yield when available, else last issuer print); live prices from local quote backend or overnight snapshot (WisdomTree, iShares/BlackRock, State Street, BondBloxx, Franklin Templeton, First Trust, Alpha Architect, FPA). Yields and durations move daily; confirm against the issuer page before trading.</p>
     <p class="disclaimer">**Not investment advice.** For internal research and discussion only. Past performance does not guarantee future results.</p>
     <p style="margin-top:0.25rem; font-size:0.75rem; color:var(--muted);">Prepared by Bravias Financial.</p>
   </div>
@@ -187,7 +187,8 @@
     {id:"TLT", lab:"TLT"},
   ];
 
-  const funds = [
+  // Embedded fallback if data/funds.json is unavailable (file:// or offline)
+  const FALLBACK_FUNDS = [
     { ticker: "BOXX",  issuer: "Alpha Architect", statedYield: 4.13, duration: 0.1,  stateTax: "Taxable", asOf: "2026-07-16", exemptPct: 0.0, source: "https://funds.alphaarchitect.com/boxetf/" },
     { ticker: "SGOV",  issuer: "iShares",         statedYield: 3.57, duration: 0.1,  stateTax: "Exempt",  asOf: "2026-07-15", exemptPct: 1.0, source: "https://www.ishares.com/us/products/314116" },
     { ticker: "GBIL",  issuer: "Goldman Sachs",   statedYield: 3.72, duration: 0.5,  stateTax: "Exempt",  asOf: "2026-07-15", exemptPct: 1.0, source: "https://www.goldmansachs.com" },
@@ -207,6 +208,50 @@
     { ticker: "TLT",   issuer: "iShares",         statedYield: 5.03, duration: 15.3, stateTax: "Exempt",  asOf: "2026-07-16", exemptPct: 1.0, source: "https://www.ishares.com" },
     { ticker: "ZROZ",  issuer: "PIMCO",           statedYield: 5.17, duration: 25.0, stateTax: "Exempt",  asOf: "2026-07-15", exemptPct: 1.0, source: "https://www.pimco.com" },
   ];
+
+  let funds = FALLBACK_FUNDS.map(f => ({ ...f }));
+  let fundsMeta = { source: "embedded-fallback", updatedAt: null };
+
+  async function loadFundsJson() {
+    const urls = ["data/funds.json", "./data/funds.json"];
+    // When served by local backend, same origin
+    for (const u of urls) {
+      try {
+        const r = await fetch(u, { cache: "no-store" });
+        if (!r.ok) continue;
+        const j = await r.json();
+        if (!j || !Array.isArray(j.funds) || !j.funds.length) continue;
+        funds = j.funds.map(f => ({
+          ticker: f.ticker,
+          issuer: f.issuer,
+          statedYield: Number(f.statedYield),
+          duration: Number(f.duration),
+          stateTax: f.stateTax,
+          asOf: f.asOf,
+          exemptPct: Number(f.exemptPct),
+          source: f.source,
+          yieldSource: f.yieldSource || "issuer",
+          price: f.price != null ? Number(f.price) : null,
+          priceAsOf: f.priceAsOf || null,
+        }));
+        fundsMeta = { source: "data/funds.json", updatedAt: j.updatedAt || null };
+        // Seed PX from overnight bot prices so GitHub Pages still shows something
+        funds.forEach(f => {
+          if (f.price != null && isFinite(f.price)) {
+            PX[f.ticker] = PX[f.ticker] || { last: f.price, prev: null, chg: null, pct: null };
+            if (PX[f.ticker].last == null) PX[f.ticker].last = f.price;
+          }
+        });
+        const note = document.getElementById("feedNote");
+        if (note && j.updatedAt) {
+          note.dataset.fundsUpdated = j.updatedAt;
+        }
+        return true;
+      } catch (e) { /* try next */ }
+    }
+    return false;
+  }
+
 
   let stateRate = 10.0;
   let currentMode = "scatter";
@@ -598,9 +643,15 @@
   }, 15 * 60 * 1000);
 
   (async function boot() {
+    await loadFundsJson();
     render();
     await pullLivePrices();
     render();
+    const note = document.getElementById("feedNote");
+    if (note && fundsMeta.updatedAt) {
+      note.innerHTML = (note.innerHTML || "") +
+        ` · fund book <code>${fundsMeta.source}</code> updated ${fundsMeta.updatedAt}`;
+    }
   })();
 </script>
 </body>

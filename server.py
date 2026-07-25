@@ -249,6 +249,27 @@ class Handler(BaseHTTPRequestHandler):
             self._json({"symbol": sym, "source": source, **q})
             return
 
+        # Static data (fund book JSON for Pages + local)
+        if path.startswith("/data/"):
+            rel = path.lstrip("/")
+            # path traversal guard
+            target = (BASE_DIR / rel).resolve()
+            if not str(target).startswith(str(BASE_DIR.resolve())):
+                self.send_error(403)
+                return
+            if target.is_file():
+                body = target.read_bytes()
+                ctype = "application/json; charset=utf-8" if target.suffix == ".json" else "application/octet-stream"
+                self.send_response(200)
+                self.send_header("Content-Type", ctype)
+                self.send_header("Content-Length", str(len(body)))
+                self._cors()
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            self.send_error(404)
+            return
+
         if path in ("/", "/index.html"):
             if not HTML_FILE.exists():
                 self.send_error(404, "index.html not found")

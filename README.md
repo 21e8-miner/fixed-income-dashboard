@@ -18,11 +18,38 @@ After-tax yield uses a **37% federal** top rate and your **state tax slider**, s
 
 | Layer | Source | Auto? |
 |-------|--------|-------|
-| Market price / day change | Yahoo via local `server.py` | yes |
-| Curve tape (13w, 5y, 10y, 30y, SGOV, TLT) | Yahoo | yes |
-| Stated / SEC yields & duration | Issuer pages (embedded as-of) | manual update of embedded table |
+| Market price / day change | Yahoo via local `server.py` **or** overnight `data/funds.json` | yes |
+| Curve tape (13w, 5y, 10y, 30y, SGOV, TLT) | Yahoo (local server) | yes |
+| Stated yields | `data/funds.json` updated by GitHub Action | **weekday mornings** |
+| Duration / tax treatment | Desk book (manual when structure changes) | rare |
 
-**We never invent yields.** Stale as-of dates (>45 days) light the status badge orange.
+**We never invent yields.** If Yahoo has no usable fund yield, the prior print is kept. Stale as-of dates (>45 days) light the status badge orange.
+
+### Morning automation (GitHub Actions)
+
+Workflow: `.github/workflows/update-yields.yml`
+
+| Trigger | When |
+|---------|------|
+| `schedule` | Weekdays **13:00 UTC** (~9am Eastern daylight) |
+| `workflow_dispatch` | Manual “Run workflow” in the Actions tab |
+
+What it does:
+
+1. Checks out the repo  
+2. Runs `python scripts/update_yields.py` (yfinance)  
+3. Writes `data/funds.json` (yields + last prices when available)  
+4. Commits & pushes only if the file changed  
+
+```bash
+# local dry-run
+python3 scripts/update_yields.py --dry-run
+
+# local write
+python3 scripts/update_yields.py
+```
+
+> **Caveat:** Yahoo’s fund `yield` field is a free proxy — usually close to distribution / SEC-style yield, **not** a guarantee of issuer SEC 30-day. BOXX and other odd structures often return 0 and are left on the last manual/issuer print. Confirm against the issuer page before trading size.
 
 ## Local run
 
