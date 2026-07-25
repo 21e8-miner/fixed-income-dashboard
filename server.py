@@ -14,8 +14,6 @@ Endpoints:
   GET /api/quotes?symbols=CL=F,DHT,...
                         → {quotes: {SYM: {last, prev, chg, pct}}, source, cached}
   GET /api/quote?s=CL=F → single-symbol shape
-  GET /api/gauges       → desk gauges (EIA, NG strip, WCS, TD3C scrape, …)
-  GET /api/gauges?force=1 → bypass 30m gauge cache
 """
 
 from __future__ import annotations
