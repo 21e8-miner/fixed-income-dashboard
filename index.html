@@ -1,500 +1,607 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fixed Income Products Snapshot Dashboard</title>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js" crossorigin></script>
-  <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js" crossorigin></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      background-color: #f4f6f8;
-      font-family: 'Times New Roman', Times, serif;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fixed Income Pro — Auto-Updating · Bravias Financial</title>
+<style>
+  :root {
+    --canvas: #0f172a;
+    --surface: #1e293b;
+    --surface-2: #334155;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --green: #4ade80;
+    --orange: #fbbf24;
+    --red: #f87171;
+    --purple: #a78bfa;
+    --border: #475569;
+    --hover: #475569;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--canvas);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 2rem;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+  header { margin-bottom: 2rem; }
+  header h1 { font-size: 1.75rem; font-weight: 700; }
+  header p { color: var(--muted); font-size: 0.85rem; margin-top: 0.25rem; }
+  .controls { display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .control-group { display: flex; align-items: center; gap: 0.5rem; }
+  .control-group label { font-size: 0.8rem; color: var(--muted); min-width: 120px; }
+  input[type="range"] { width: 150px; accent-color: var(--accent); }
+  .state-value { font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.85rem; font-weight: 600; color: var(--accent); min-width: 40px; }
+  .mode-toggle { display: flex; background: var(--surface-2); border-radius: 6px; padding: 2px; flex-wrap: wrap; }
+  .mode-toggle button { background: none; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.8rem; cursor: pointer; color: var(--muted); transition: all 0.2s; }
+  .mode-toggle button.active { background: var(--accent); color: var(--canvas); font-weight: 600; }
+  .export-btn { background: var(--accent); color: var(--canvas); border: none; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+  .export-btn:hover { opacity: 0.8; }
+  .refresh-btn { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; transition: opacity 0.2s; }
+  .refresh-btn:hover { opacity: 0.8; }
+  .refresh-btn.loading { opacity: 0.5; }
+  .status-badge { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; color: var(--muted); }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+  .status-dot.stale { background: var(--orange); }
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem; }
+  .chart-card h3 { font-size: 0.85rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+  .scatter-container { position: relative; width: 100%; height: 320px; }
+  .grid-line { position: absolute; left: 0; right: 0; border-top: 1px solid var(--border); }
+  .y-axis-line { position: absolute; top: 0; bottom: 0; left: 0; border-left: 1px solid var(--border); }
+  .x-axis-line { position: absolute; bottom: 0; left: 0; right: 0; border-bottom: 1px solid var(--border); }
+  .y-axis-label, .x-axis-label { font-size: 0.7rem; color: var(--muted); }
+  .scatter-point { position: absolute; width: 14px; height: 14px; border-radius: 50%; cursor: pointer; transform: translate(-50%, -50%); transition: transform 0.2s, opacity 0.2s; border: 2px solid transparent; }
+  .scatter-point:hover { transform: translate(-50%, -50%) scale(1.5); border-color: var(--text); z-index: 10; }
+  .scatter-point.exempt { background: var(--green); }
+  .scatter-point.partial { background: var(--orange); }
+  .scatter-point.taxable { background: var(--red); }
+  .scatter-point.mixed { background: var(--purple); }
+  .point-label { position: absolute; font-size: 0.7rem; font-family: "SFMono-Regular", Consolas, monospace; color: var(--muted); white-space: nowrap; pointer-events: none; }
+  .tooltip { position: absolute; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; font-family: "SFMono-Regular", Consolas, monospace; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.15s; z-index: 20; }
+  .scatter-container:hover .tooltip { opacity: 1; }
+  .insights { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+  .insight-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
+  .insight-card h4 { font-size: 0.8rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+  .insight-card .value { font-size: 1.25rem; font-weight: 700; color: var(--text); }
+  .insight-card .detail { font-size: 0.8rem; color: var(--muted); margin-top: 0.25rem; }
+  .insight-card .highlight { color: var(--accent); }
+  .table-wrap { background: var(--surface); border-radius: 10px; border: 1px solid var(--border); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  thead th { background: var(--surface-2); border-bottom: 2px solid var(--border); padding: 0.75rem 1rem; text-align: left; font-weight: 600; cursor: pointer; user-select: none; white-space: nowrap; }
+  thead th:hover { background: var(--hover); }
+  thead th .sort-indicator { margin-left: 0.35rem; font-size: 0.7rem; opacity: 0.4; }
+  thead th.sorted-asc .sort-indicator { opacity: 1; }
+  thead th.sorted-desc .sort-indicator { opacity: 1; transform: rotate(180deg); }
+  tbody td { padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); font-family: "SFMono-Regular", Consolas, monospace; }
+  tbody tr:hover td { background: var(--surface-2); }
+  tbody tr:last-child td { border-bottom: none; }
+  .badge { display: inline-block; padding: 0.1rem 0.4rem; border-radius: 3px; font-size: 0.7rem; font-weight: 600; }
+  .badge-exempt { background: rgba(76,175,80,0.15); color: var(--green); }
+  .badge-partial { background: rgba(255,152,0,0.15); color: var(--orange); }
+  .badge-taxable { background: rgba(229,57,51,0.15); color: var(--red); }
+  .badge-mixed { background: rgba(167,139,250,0.15); color: var(--purple); }
+  .ladder-bucket { background: var(--surface-2); border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; }
+  .ladder-bucket h4 { font-size: 0.8rem; font-weight: 600; color: var(--muted); margin-bottom: 0.5rem; display: flex; justify-content: space-between; }
+  .ladder-bucket .bucket-meta { display: flex; gap: 1rem; font-size: 0.8rem; flex-wrap: wrap; }
+  .ladder-bucket .meta-item .label { color: var(--muted); font-size: 0.7rem; }
+  .ladder-bucket .meta-item .val { font-family: "SFMono-Regular", Consolas, monospace; font-weight: 600; }
+  .footer { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; margin-top: 1.5rem; }
+  .footer p { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.25rem; }
+  .footer .disclaimer { font-weight: 600; color: var(--text); }
+
+  .tape { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:0.5rem; margin-bottom:1.25rem; }
+  .tape-tile { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:0.75rem 0.9rem; }
+  .tape-lab { font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; }
+  .tape-val { font-family:"SFMono-Regular",Consolas,monospace; font-size:1.15rem; font-weight:600; margin-top:0.15rem; }
+  .tape-val.blank { color:var(--border); }
+  .up { color:var(--green); } .dn { color:var(--red); }
+  .px-cell { font-family:"SFMono-Regular",Consolas,monospace; font-size:0.8rem; }
+  .live-note { font-size:0.72rem; color:var(--muted); margin-bottom:1rem; }
+  @media (max-width: 768px) { body { padding: 1rem; } .controls { flex-direction: column; align-items: flex-start; } }
+</style>
 </head>
 <body>
-  <div id="root"></div>
+<div class="container">
+  <header>
+    <h1>Fixed Income Pro</h1>
+    <p>Yield • Duration • Tax Efficiency • Live prices • Prepared by Bravias Financial</p>
+  </header>
 
-  <script type="text/babel">
-    const { useState, useMemo } = React;
-    const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } = Recharts;
+  <div class="controls">
+    <div class="control-group">
+      <label>State Tax Rate:</label>
+      <input type="range" id="stateRate" min="0" max="13.3" step="0.1" value="10.0">
+      <span class="state-value" id="stateRateValue">10.0%</span>
+    </div>
+    <div class="mode-toggle">
+      <button class="mode-btn active" data-mode="scatter">Scatter</button>
+      <button class="mode-btn" data-mode="table">Table</button>
+      <button class="mode-btn" data-mode="ladder">Duration Ladder</button>
+    </div>
+    <button class="refresh-btn" id="refreshBtn">Refresh Data</button>
+    <span class="status-badge" id="statusBadge"><span class="status-dot"></span> Last updated: <span id="lastUpdated">--</span></span>
+    <button class="export-btn" id="exportBtn">Export CSV</button>
+  </div>
 
-    const IconTrendingUp = ({ size = 20, color = 'currentColor' }) => (
-      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
-        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
-        <polyline points="16 7 22 7 22 13"/>
-      </svg>
-    );
 
-    const IconClock = ({ size = 20, color = 'currentColor' }) => (
-      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
-        <circle cx="12" cy="12" r="10"/>
-        <polyline points="12 6 12 12 16 14"/>
-      </svg>
-    );
+  <div class="live-note" id="feedNote">Prices via local backend (<code>python3 server.py</code> on :8770). Stated yields remain issuer SEC/disclosed prints with as-of dates — never invented.</div>
+  <div class="tape" id="tape"></div>
 
-    const IconShield = ({ size = 24, color = 'currentColor' }) => (
-      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
-        <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
-      </svg>
-    );
+  <div class="insights" id="insights"></div>
 
-    const IconDatabase = ({ size = 20, color = 'currentColor' }) => (
-      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
-        <ellipse cx="12" cy="5" rx="9" ry="3"/>
-        <path d="M3 5V19A9 3 0 0 0 21 19V5"/>
-        <path d="M3 12A9 3 0 0 0 21 12"/>
-      </svg>
-    );
+  <div class="chart-card" id="scatterCard">
+    <h3>Yield vs Duration (click points for details)</h3>
+    <div class="scatter-container" id="scatterPlot"></div>
+  </div>
 
-    const FixedIncomeDashboard = () => {
-      const [view, setView] = useState('yield');
-      const [showAfterTax, setShowAfterTax] = useState(false);
-      const [stateTaxRatePct, setStateTaxRatePct] = useState(13.3);
-      const [categoryFilter, setCategoryFilter] = useState('All');
-      
-      // Verified & Updated: July 2026 data from issuer disclosures
-      const products = [
-        { ticker: 'USFR', category: 'Treasury / T-Bill', yieldPct: 3.61, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-02', durationYears: 0.02, stateExemptPct: 100, provider: 'WisdomTree', sourceUrl: 'https://www.wisdomtree.com/investments/etfs/fixed-income/usfr' },
-        { ticker: 'TFLO', category: 'Treasury / T-Bill', yieldPct: 3.63, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 0.01, stateExemptPct: 100, provider: 'BlackRock', sourceUrl: 'https://www.ishares.com/us/products/264620' },
-        { ticker: 'SGOV', category: 'Treasury / T-Bill', yieldPct: 3.56, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 0.11, stateExemptPct: 100, provider: 'BlackRock', sourceUrl: 'https://www.ishares.com/us/products/314116' },
-        { ticker: 'SHV', category: 'Treasury / T-Bill', yieldPct: 3.57, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 0.27, stateExemptPct: 100, provider: 'BlackRock', sourceUrl: 'https://www.ishares.com/us/products/239458' },
-        { ticker: 'BIL', category: 'Treasury / T-Bill', yieldPct: 3.85, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 0.10, stateExemptPct: 100, provider: 'SSGA', sourceUrl: 'https://www.ssga.com/us/en/individual/etfs/funds/bil' },
-        { ticker: 'TBIL', category: 'Treasury / T-Bill', yieldPct: 3.54, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-06-30', durationYears: 0.25, stateExemptPct: 100, provider: 'F/m Investments', sourceUrl: 'https://ustreasuryetf.com/etf/tbil/' },
-        { ticker: 'XONE', category: 'Treasury / T-Bill', yieldPct: 3.84, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-05-29', durationYears: 0.99, stateExemptPct: 100, provider: 'BondBloxx', sourceUrl: 'https://bondbloxxetf.com/funds/xone/' },
-        { ticker: 'FTSD', category: 'Treasury / T-Bill', yieldPct: 3.95, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 1.50, stateExemptPct: 100, provider: 'Franklin', sourceUrl: 'https://www.franklintempleton.com/investments/options/exchange-traded-funds/products/23510' },
-        
-        { ticker: 'JPST', category: 'Active / Corporate', yieldPct: 4.07, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 0.83, stateExemptPct: 0, provider: 'JPMorgan', sourceUrl: 'https://am.jpmorgan.com/us/en/asset-management/adv/products/jpmorgan-ultra-short-income-etf-46637K880' },
-        { ticker: 'FLOT', category: 'Active / Corporate', yieldPct: 4.01, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 0.01, stateExemptPct: 0, provider: 'BlackRock', sourceUrl: 'https://www.ishares.com/us/products/239534' },
-        { ticker: 'MINT', category: 'Active / Corporate', yieldPct: 3.86, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 0.35, stateExemptPct: 0, provider: 'PIMCO', sourceUrl: 'https://www.pimco.com/en-us/investments/etf/enhanced-short-maturity-active-exchange-traded-fund/usd' },
-        { ticker: 'FTSM', category: 'Active / Corporate', yieldPct: 4.08, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 0.64, stateExemptPct: 30, provider: 'First Trust', sourceUrl: 'https://www.ftportfolios.com/retail/etf/etfsummary.aspx?Ticker=FTSM' },
-        { ticker: 'NEAR', category: 'Active / Corporate', yieldPct: 4.20, yieldLabel: 'SEC 30-Day', yieldAsOf: '2026-07-01', durationYears: 2.22, stateExemptPct: 0, provider: 'BlackRock', sourceUrl: 'https://www.ishares.com/us/products/239825' },
-        
-        { ticker: 'BOXX', category: 'Synthetic / Box', yieldPct: 4.60, yieldLabel: 'Yield to Expiration', yieldAsOf: '2026-06-30', durationYears: 0.76, stateExemptPct: 0, provider: 'Alpha Architect', sourceUrl: 'https://funds.alphaarchitect.com/boxetf/' },
-        { ticker: 'SUB', category: 'Municipal', yieldPct: 2.55, yieldLabel: 'SEC 30-Day (Tax-Eq 4.31%)', yieldAsOf: '2026-07-01', durationYears: 1.86, stateExemptPct: 100, provider: 'BlackRock', sourceUrl: 'https://www.ishares.com/us/products/239466' },
-      ];
+  <div class="table-wrap" id="tableCard" style="display:none;">
+    <table id="yieldTable">
+      <thead>
+        <tr>
+          <th data-key="ticker" data-type="string">Ticker <span class="sort-indicator">▼</span></th>
+          <th data-key="issuer" data-type="string">Issuer <span class="sort-indicator">▼</span></th>
+          <th data-key="price" data-type="number">Price <span class="sort-indicator">▼</span></th>
+          <th data-key="statedYield" data-type="number">Stated Yield <span class="sort-indicator">▼</span></th>
+          <th data-key="afterTax" data-type="number">After-Tax Yield <span class="sort-indicator">▼</span></th>
+          <th data-key="taxSavings" data-type="number">Tax Savings <span class="sort-indicator">▼</span></th>
+          <th data-key="duration" data-type="number">Duration <span class="sort-indicator">▼</span></th>
+          <th data-key="stateTax" data-type="string">State Tax <span class="sort-indicator">▼</span></th>
+          <th data-key="asOf" data-type="string">As Of <span class="sort-indicator">▼</span></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
 
-      const filteredProducts = useMemo(() => {
-        if (categoryFilter === 'All') return products;
-        return products.filter(p => p.category === categoryFilter);
-      }, [categoryFilter]);
+  <div id="ladderCard" style="display:none;">
+    <div class="chart-card">
+      <h3>Duration Ladder</h3>
+      <div id="ladderBuckets"></div>
+    </div>
+  </div>
 
-      const enrichedProducts = useMemo(() => {
-        return filteredProducts.map(p => {
-          const stateTaxRate = stateTaxRatePct / 100;
-          const afterTaxYield = p.yieldPct * (1 - stateTaxRate * (1 - p.stateExemptPct / 100));
-          return { ...p, afterTaxYield };
-        });
-      }, [filteredProducts, stateTaxRatePct]);
+  <div class="footer">
+    <p><strong>Sources.</strong> Stated yields from issuer fund pages; live prices from Yahoo via local quote backend (WisdomTree, iShares/BlackRock, State Street, BondBloxx, Franklin Templeton, First Trust, Alpha Architect, FPA). Yields and durations move daily; confirm against the issuer page before trading.</p>
+    <p class="disclaimer">**Not investment advice.** For internal research and discussion only. Past performance does not guarantee future results.</p>
+    <p style="margin-top:0.25rem; font-size:0.75rem; color:var(--muted);">Prepared by Bravias Financial.</p>
+  </div>
+</div>
 
-      const bestChoice = useMemo(() => {
-        if (enrichedProducts.length === 0) return null;
-        const sorted = [...enrichedProducts].sort((a, b) => {
-          const yieldA = showAfterTax ? a.afterTaxYield : a.yieldPct;
-          const yieldB = showAfterTax ? b.afterTaxYield : b.yieldPct;
-          return yieldB - yieldA;
-        });
-        return sorted[0];
-      }, [enrichedProducts, showAfterTax]);
+<script>
+  // === DATA ===
+  // Stated yields: issuer disclosures (embedded). Live market prices: local quote backend.
+  const DATA_SOURCE = "hybrid"; // yields embedded + prices live
+  const LOCAL_PORTS = [8770, 8765, 5015];
+  let API_BASE = null;
+  const PX = {}; // ticker -> {last, prev, chg, pct}
+  const TAPE_SYMS = [
+    {id:"^IRX", lab:"13w T-bill"},
+    {id:"^FVX", lab:"5y"},
+    {id:"^TNX", lab:"10y"},
+    {id:"^TYX", lab:"30y"},
+    {id:"SGOV", lab:"SGOV"},
+    {id:"TLT", lab:"TLT"},
+  ];
 
-      const chartData = useMemo(() => {
-        if (view === 'yield') {
-          return enrichedProducts.map(p => ({
-            ticker: p.ticker,
-            yield: showAfterTax ? p.afterTaxYield : p.yieldPct,
-            isBest: bestChoice && p.ticker === bestChoice.ticker,
-            fullData: p
-          }));
-        } else {
-          return enrichedProducts.map(p => ({
-            ticker: p.ticker,
-            duration: p.durationYears || 0,
-            isBest: bestChoice && p.ticker === bestChoice.ticker,
-            fullData: p
-          }));
-        }
-      }, [enrichedProducts, view, showAfterTax, bestChoice]);
+  const funds = [
+    { ticker: "BOXX",  issuer: "Alpha Architect", statedYield: 4.13, duration: 0.1,  stateTax: "Taxable", asOf: "2026-07-16", exemptPct: 0.0, source: "https://funds.alphaarchitect.com/boxetf/" },
+    { ticker: "SGOV",  issuer: "iShares",         statedYield: 3.57, duration: 0.1,  stateTax: "Exempt",  asOf: "2026-07-15", exemptPct: 1.0, source: "https://www.ishares.com/us/products/314116" },
+    { ticker: "GBIL",  issuer: "Goldman Sachs",   statedYield: 3.72, duration: 0.5,  stateTax: "Exempt",  asOf: "2026-07-15", exemptPct: 1.0, source: "https://www.goldmansachs.com" },
+    { ticker: "USFR",  issuer: "WisdomTree",      statedYield: 3.92, duration: 0.0,  stateTax: "Exempt",  asOf: "2026-07-15", exemptPct: 1.0, source: "https://www.wisdomtree.com" },
+    { ticker: "XONE",  issuer: "BondBloxx",       statedYield: 3.87, duration: 0.94, stateTax: "Exempt",  asOf: "2026-05-29", exemptPct: 1.0, source: "https://bondbloxxetf.com" },
+    { ticker: "XTWO",  issuer: "BondBloxx",       statedYield: 3.97, duration: 2.0,  stateTax: "Exempt",  asOf: "2026-05-29", exemptPct: 1.0, source: "https://bondbloxxetf.com" },
+    { ticker: "XTRE",  issuer: "BondBloxx",       statedYield: 4.14, duration: 3.0,  stateTax: "Exempt",  asOf: "2026-06-30", exemptPct: 1.0, source: "https://bondbloxxetf.com" },
+    { ticker: "FPA",   issuer: "FPA",             statedYield: 3.71, duration: 4.12, stateTax: "Exempt",  asOf: "2026-07-15", exemptPct: 1.0, source: "https://fpa.com" },
+    { ticker: "XFIV",  issuer: "BondBloxx",       statedYield: 4.23, duration: 5.0,  stateTax: "Exempt",  asOf: "2026-06-30", exemptPct: 1.0, source: "https://bondbloxxetf.com" },
+    { ticker: "XSVN",  issuer: "BondBloxx",       statedYield: 4.37, duration: 7.0,  stateTax: "Exempt",  asOf: "2026-06-30", exemptPct: 1.0, source: "https://bondbloxxetf.com" },
+    { ticker: "TYLD",  issuer: "Cambria",         statedYield: 4.50, duration: 3.0,  stateTax: "Taxable", asOf: "2026-07-15", exemptPct: 0.0, source: "https://www.cambriafunds.com" },
+    { ticker: "HIDE",  issuer: "Alpha Architect", statedYield: 2.94, duration: 3.0,  stateTax: "Mixed",   asOf: "2026-07-15", exemptPct: 0.5, source: "https://funds.alphaarchitect.com" },
+    { ticker: "IEI",   issuer: "iShares",         statedYield: 3.62, duration: 5.0,  stateTax: "Exempt",  asOf: "2026-07-15", exemptPct: 1.0, source: "https://www.ishares.com" },
+    { ticker: "AGG",   issuer: "iShares",         statedYield: 4.69, duration: 5.7,  stateTax: "Exempt",  asOf: "2026-07-15", exemptPct: 1.0, source: "https://www.ishares.com" },
+    { ticker: "XTEN",  issuer: "BondBloxx",       statedYield: 4.63, duration: 10.0, stateTax: "Exempt",  asOf: "2026-05-29", exemptPct: 1.0, source: "https://bondbloxxetf.com" },
+    { ticker: "IBGB",  issuer: "iShares",         statedYield: 4.93, duration: 12.3, stateTax: "Exempt",  asOf: "2026-04-30", exemptPct: 1.0, source: "https://www.ishares.com" },
+    { ticker: "TLT",   issuer: "iShares",         statedYield: 5.03, duration: 15.3, stateTax: "Exempt",  asOf: "2026-07-16", exemptPct: 1.0, source: "https://www.ishares.com" },
+    { ticker: "ZROZ",  issuer: "PIMCO",           statedYield: 5.17, duration: 25.0, stateTax: "Exempt",  asOf: "2026-07-15", exemptPct: 1.0, source: "https://www.pimco.com" },
+  ];
 
-      const CustomTooltip = ({ active, payload }) => {
-        if (!active || !payload || !payload[0]) return null;
-        const data = payload[0].payload.fullData;
-        
-        return (
-          <div style={{
-            backgroundColor: '#FFFEF5',
-            border: '2px solid #2C5F7D',
-            padding: '12px',
-            fontFamily: 'Times New Roman, serif',
-            fontSize: '13px',
-            maxWidth: '280px'
-          }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#006400' }}>
-              {data.ticker} ({data.provider}) • {data.category}
-            </div>
-            <div style={{ marginBottom: '4px' }}>
-              <strong>Yield:</strong> {data.yieldPct.toFixed(2)}% ({data.yieldLabel})
-            </div>
-            {showAfterTax && (
-              <div style={{ marginBottom: '4px', color: '#8B0000' }}>
-                <strong>After-Tax:</strong> {data.afterTaxYield.toFixed(2)}%
-              </div>
-            )}
-            <div style={{ marginBottom: '4px' }}>
-              <strong>Duration:</strong> {data.durationYears ? `${data.durationYears.toFixed(2)} yrs` : 'N/A'}
-            </div>
-            <div style={{ marginBottom: '4px' }}>
-              <strong>State Tax Status:</strong> {data.stateExemptPct === 100 ? 'Fully Exempt' : data.stateExemptPct === 0 ? 'Fully Taxable' : `${data.stateExemptPct}% Exempt`}
-            </div>
-            <div style={{ fontSize: '11px', color: '#666' }}>
-              As of {data.yieldAsOf}
-            </div>
-          </div>
-        );
-      };
+  let stateRate = 10.0;
+  let currentMode = "scatter";
 
-      return (
-        <div style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: '24px',
-          backgroundColor: '#FFFEF5',
-          fontFamily: 'Times New Roman, serif',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-          marginTop: '20px',
-          marginBottom: '20px',
-          borderRadius: '4px'
-        }}>
-          {/* Header */}
-          <div style={{ marginBottom: '32px', borderBottom: '3px solid #2C5F7D', paddingBottom: '16px' }}>
-            <h1 style={{
-              fontSize: '32px',
-              fontWeight: 'bold',
-              color: '#2C5F7D',
-              margin: '0 0 8px 0'
-            }}>
-              Fixed Income Products Snapshot
-            </h1>
-            <div style={{ fontSize: '14px', color: '#666', fontStyle: 'italic' }}>
-              Ultra-Short & Short-Duration ETFs (15 Key Funds) • Updated July 2026
-            </div>
-          </div>
+  // === DATA FRESHNESS CHECK ===
+  function checkFreshness() {
+    const now = new Date();
+    let allFresh = true;
+    funds.forEach(f => {
+      const asOfDate = new Date(f.asOf);
+      const daysDiff = (now - asOfDate) / (1000 * 60 * 60 * 24);
+      f.isStale = daysDiff > 45;
+      if (f.isStale) allFresh = false;
+    });
+    return allFresh;
+  }
 
-          {/* Controls */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: '16px',
-            marginBottom: '24px',
-            padding: '16px',
-            backgroundColor: '#F5F5DC',
-            border: '1px solid #2C5F7D',
-            borderRadius: '4px'
-          }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px', color: '#2C5F7D' }}>
-                Category Filter
-              </label>
-              <select 
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  fontSize: '14px',
-                  fontFamily: 'Times New Roman, serif',
-                  border: '1px solid #2C5F7D',
-                  borderRadius: '2px',
-                  backgroundColor: 'white'
-                }}
-              >
-                <option value="All">All Categories (15 Funds)</option>
-                <option value="Treasury / T-Bill">Treasury & T-Bills</option>
-                <option value="Active / Corporate">Active & Corporate</option>
-                <option value="Synthetic / Box">Synthetic / Box Spread</option>
-                <option value="Municipal">Municipal (Tax-Exempt)</option>
-              </select>
-            </div>
+  function updateStatusBadge() {
+    const allFresh = checkFreshness();
+    const badge = document.getElementById("statusBadge");
+    const dot = badge.querySelector(".status-dot");
+    const lastUpdated = document.getElementById("lastUpdated");
 
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px', color: '#2C5F7D' }}>
-                View Type
-              </label>
-              <select 
-                value={view}
-                onChange={(e) => setView(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  fontSize: '14px',
-                  fontFamily: 'Times New Roman, serif',
-                  border: '1px solid #2C5F7D',
-                  borderRadius: '2px',
-                  backgroundColor: 'white'
-                }}
-              >
-                <option value="yield">Yield Comparison</option>
-                <option value="duration">Duration Analysis</option>
-              </select>
-            </div>
+    if (allFresh) {
+      dot.classList.remove("stale");
+      lastUpdated.textContent = "All current";
+    } else {
+      dot.classList.add("stale");
+      const staleCount = funds.filter(f => f.isStale).length;
+      lastUpdated.textContent = `${staleCount} stale`;
+    }
+  }
 
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px', color: '#2C5F7D' }}>
-                State Tax Rate (%)
-              </label>
-              <input
-                type="number"
-                value={stateTaxRatePct}
-                onChange={(e) => setStateTaxRatePct(Math.max(0, Math.min(20, parseFloat(e.target.value) || 0)))}
-                min="0"
-                max="20"
-                step="0.1"
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  fontSize: '14px',
-                  fontFamily: 'Times New Roman, serif',
-                  border: '1px solid #2C5F7D',
-                  borderRadius: '2px'
-                }}
-              />
-            </div>
+  // === AFTER-TAX CALCULATION ===
+  function computeAfterTax(f, rate) {
+    const federalRate = 0.37;
+    const stateRateDecimal = rate / 100;
+    const effectiveState = stateRateDecimal * (1 - f.exemptPct);
+    return f.statedYield * (1 - federalRate - effectiveState);
+  }
 
-            <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-              <label style={{
-                display: 'flex',
-                alignItems: 'center',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                color: '#2C5F7D'
-              }}>
-                <input
-                  type="checkbox"
-                  checked={showAfterTax}
-                  onChange={(e) => setShowAfterTax(e.target.checked)}
-                  style={{ marginRight: '8px', cursor: 'pointer' }}
-                />
-                Show After-Tax Yields
-              </label>
-            </div>
-          </div>
+  function updateFunds() {
+    funds.forEach(f => {
+      f.afterTax = computeAfterTax(f, stateRate);
+      f.taxSavings = f.statedYield - f.afterTax;
+      f.taxDrag = (f.taxSavings / f.statedYield) * 100;
+    });
+  }
 
-          {/* Best Choice Banner */}
-          {view === 'yield' && bestChoice && (
-            <div style={{
-              padding: '16px',
-              backgroundColor: '#E8F5E9',
-              border: '2px solid #2E7D32',
-              borderRadius: '4px',
-              marginBottom: '24px'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <IconShield size={24} color="#2E7D32" />
-                <div>
-                  <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#2E7D32' }}>
-                    Top Yielding Choice ({categoryFilter}): {bestChoice.ticker} ({bestChoice.provider})
-                  </div>
-                  <div style={{ fontSize: '13px', color: '#1B5E20' }}>
-                    {showAfterTax 
-                      ? `${bestChoice.afterTaxYield.toFixed(2)}% after-tax yield (${stateTaxRatePct}% state rate)`
-                      : `${bestChoice.yieldPct.toFixed(2)}% pre-tax yield`
-                    } • {bestChoice.stateExemptPct === 100 ? 'State tax-exempt' : bestChoice.stateExemptPct === 0 ? 'Fully taxable' : `${bestChoice.stateExemptPct}% exempt`}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+  // === INSIGHTS ===
+  function renderInsights() {
+    const totalYield = funds.reduce((s, f) => s + f.statedYield, 0) / funds.length;
+    const totalAfter = funds.reduce((s, f) => s + f.afterTax, 0) / funds.length;
+    const bestTax = funds.reduce((b, f) => f.taxSavings > b.taxSavings ? f : b);
+    const bestAfter = funds.reduce((b, f) => f.afterTax > b.afterTax ? f : b);
+    const shortestDur = funds.reduce((b, f) => f.duration < b.duration ? f : b);
+    const longestDur = funds.reduce((b, f) => f.duration > b.duration ? f : b);
+    const bestTaxEff = funds.reduce((b, f) => f.taxDrag < b.taxDrag ? f : b);
 
-          {/* Chart */}
-          <div style={{
-            backgroundColor: 'white',
-            border: '2px solid #2C5F7D',
-            borderRadius: '4px',
-            padding: '24px',
-            marginBottom: '24px'
-          }}>
-            <h2 style={{
-              fontSize: '18px',
-              fontWeight: 'bold',
-              color: '#2C5F7D',
-              marginBottom: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              {view === 'yield' ? (
-                <><IconTrendingUp size={20} /> Yield Comparison</>
-              ) : (
-                <><IconClock size={20} /> Duration Risk</>
-              )}
-            </h2>
-            
-            <ResponsiveContainer width="100%" height={420}>
-              <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" />
-                <XAxis 
-                  dataKey="ticker" 
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                  tick={{ fill: '#2C5F7D', fontSize: 13, fontFamily: 'Times New Roman, serif' }}
-                />
-                <YAxis 
-                  tick={{ fill: '#2C5F7D', fontSize: 13, fontFamily: 'Times New Roman, serif' }}
-                  label={{ 
-                    value: view === 'yield' ? 'Yield (%)' : 'Duration (years)', 
-                    angle: -90, 
-                    position: 'insideLeft',
-                    style: { fill: '#2C5F7D', fontSize: 13, fontFamily: 'Times New Roman, serif' }
-                  }}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey={view === 'yield' ? 'yield' : 'duration'} radius={[4, 4, 0, 0]}>
-                  {chartData.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`}
-                      fill={entry.isBest ? '#2E7D32' : '#2C5F7D'}
-                      stroke={entry.isBest ? '#1B5E20' : '#1A4F66'}
-                      strokeWidth={entry.isBest ? 2 : 1}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+    document.getElementById("insights").innerHTML = `
+      <div class="insight-card"><h4>Avg Stated Yield</h4><div class="value">${totalYield.toFixed(2)}%</div><div class="detail">Across ${funds.length} funds</div></div>
+      <div class="insight-card"><h4>Avg After-Tax Yield</h4><div class="value highlight">${totalAfter.toFixed(2)}%</div><div class="detail">At ${stateRate}% state rate</div></div>
+      <div class="insight-card"><h4>Highest Tax Savings</h4><div class="value">${bestTax.ticker}</div><div class="detail">${bestTax.taxSavings.toFixed(2)}% saved annually</div></div>
+      <div class="insight-card"><h4>Best After-Tax Yield</h4><div class="value">${bestAfter.ticker}</div><div class="detail">${bestAfter.afterTax.toFixed(2)}% after tax</div></div>
+      <div class="insight-card"><h4>Most Tax-Efficient</h4><div class="value">${bestTaxEff.ticker}</div><div class="detail">${bestTaxEff.taxDrag.toFixed(1)}% tax drag</div></div>
+      <div class="insight-card"><h4>Duration Range</h4><div class="value">${shortestDur.duration.toFixed(1)}–${longestDur.duration.toFixed(1)}yr</div><div class="detail">${shortestDur.ticker} to ${longestDur.ticker}</div></div>
+    `;
+  }
 
-          {/* Data Table */}
-          <div style={{
-            backgroundColor: 'white',
-            border: '2px solid #2C5F7D',
-            borderRadius: '4px',
-            padding: '16px',
-            overflowX: 'auto'
-          }}>
-            <h2 style={{
-              fontSize: '18px',
-              fontWeight: 'bold',
-              color: '#2C5F7D',
-              marginBottom: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              <IconDatabase size={20} /> Detailed Comparison ({enrichedProducts.length} Funds)
-            </h2>
-            
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#F5F5DC', borderBottom: '2px solid #2C5F7D' }}>
-                  <th style={{ padding: '10px', textAlign: 'left', color: '#2C5F7D', fontWeight: 'bold' }}>Ticker</th>
-                  <th style={{ padding: '10px', textAlign: 'left', color: '#2C5F7D', fontWeight: 'bold' }}>Provider</th>
-                  <th style={{ padding: '10px', textAlign: 'left', color: '#2C5F7D', fontWeight: 'bold' }}>Category</th>
-                  <th style={{ padding: '10px', textAlign: 'right', color: '#2C5F7D', fontWeight: 'bold' }}>Yield</th>
-                  {showAfterTax && (
-                    <th style={{ padding: '10px', textAlign: 'right', color: '#8B0000', fontWeight: 'bold' }}>After-Tax</th>
-                  )}
-                  <th style={{ padding: '10px', textAlign: 'right', color: '#2C5F7D', fontWeight: 'bold' }}>Duration</th>
-                  <th style={{ padding: '10px', textAlign: 'center', color: '#2C5F7D', fontWeight: 'bold' }}>State Tax</th>
-                  <th style={{ padding: '10px', textAlign: 'left', color: '#2C5F7D', fontWeight: 'bold' }}>As Of</th>
-                </tr>
-              </thead>
-              <tbody>
-                {enrichedProducts
-                  .sort((a, b) => {
-                    const valA = showAfterTax ? a.afterTaxYield : a.yieldPct;
-                    const valB = showAfterTax ? b.afterTaxYield : b.yieldPct;
-                    return valB - valA;
-                  })
-                  .map((p, idx) => {
-                    const isBest = bestChoice && p.ticker === bestChoice.ticker;
-                    return (
-                      <tr 
-                        key={p.ticker}
-                        style={{
-                          backgroundColor: isBest ? '#E8F5E9' : idx % 2 === 0 ? 'white' : '#FAFAFA',
-                          borderBottom: '1px solid #E0E0E0',
-                          borderLeft: isBest ? '4px solid #2E7D32' : 'none'
-                        }}
-                      >
-                        <td style={{ padding: '10px', fontWeight: isBest ? 'bold' : 'normal' }}>
-                          <a 
-                            href={p.sourceUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ color: '#2C5F7D', textDecoration: 'none' }}
-                            onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
-                            onMouseOut={(e) => e.target.style.textDecoration = 'none'}
-                          >
-                            {p.ticker}
-                            {isBest && <span style={{ marginLeft: '4px', color: '#2E7D32' }}>★</span>}
-                          </a>
-                        </td>
-                        <td style={{ padding: '10px' }}>{p.provider}</td>
-                        <td style={{ padding: '10px', fontSize: '12px', color: '#555' }}>{p.category}</td>
-                        <td style={{ padding: '10px', textAlign: 'right', fontFamily: 'monospace' }}>
-                          {p.yieldPct.toFixed(2)}%
-                        </td>
-                        {showAfterTax && (
-                          <td style={{ padding: '10px', textAlign: 'right', fontFamily: 'monospace', color: '#8B0000' }}>
-                            {p.afterTaxYield.toFixed(2)}%
-                          </td>
-                        )}
-                        <td style={{ padding: '10px', textAlign: 'right', fontFamily: 'monospace' }}>
-                          {p.durationYears !== undefined ? p.durationYears.toFixed(2) : 'N/A'}
-                        </td>
-                        <td style={{ padding: '10px', textAlign: 'center' }}>
-                          <span style={{
-                            padding: '4px 8px',
-                            borderRadius: '3px',
-                            fontSize: '11px',
-                            backgroundColor: p.stateExemptPct === 100 ? '#E8F5E9' : p.stateExemptPct === 0 ? '#FFEBEE' : '#FFF9C4',
-                            color: p.stateExemptPct === 100 ? '#2E7D32' : p.stateExemptPct === 0 ? '#C62828' : '#F57F17'
-                          }}>
-                            {p.stateExemptPct === 100 ? 'Exempt' : p.stateExemptPct === 0 ? 'Taxable' : `${p.stateExemptPct}%`}
-                          </span>
-                        </td>
-                        <td style={{ padding: '10px', fontSize: '12px', color: '#666' }}>
-                          {p.yieldAsOf}
-                        </td>
-                      </tr>
-                    );
-                  })}
-              </tbody>
-            </table>
-          </div>
+  // === SCATTER PLOT ===
+  function renderScatter() {
+    const maxDur = Math.max(...funds.map(f => f.duration));
+    const maxYield = Math.max(...funds.map(f => f.statedYield));
+    const plot = document.getElementById("scatterPlot");
+    plot.innerHTML = "";
 
-          {/* Footer */}
-          <div style={{
-            marginTop: '24px',
-            padding: '16px',
-            backgroundColor: '#F5F5DC',
-            border: '1px solid #2C5F7D',
-            borderRadius: '4px',
-            fontSize: '12px',
-            color: '#666'
-          }}>
-            <p style={{ margin: '0 0 8px 0' }}>
-              <strong>Methodology:</strong> State tax exemption percentages sourced from issuer tax reporting (1099-DIV). 
-              After-tax yield = Pre-tax yield × (1 - State tax rate × (1 - Exemption %))
-            </p>
-            <p style={{ margin: '0' }}>
-              <strong>Data Sources:</strong> Yields updated from individual fund issuer disclosures as of July 2026. 
-              Not investment advice. Past performance does not guarantee future results.
-            </p>
+    for (let i = 0; i <= 5; i++) {
+      const gl = document.createElement("div");
+      gl.className = "grid-line";
+      gl.style.bottom = (i * 20) + "%";
+      plot.appendChild(gl);
+    }
+
+    const yAxis = document.createElement("div");
+    yAxis.className = "y-axis-line";
+    plot.appendChild(yAxis);
+    const xAxis = document.createElement("div");
+    xAxis.className = "x-axis-line";
+    plot.appendChild(xAxis);
+
+    for (let i = 0; i <= 5; i++) {
+      const pct = (i / 5) * maxYield;
+      const label = document.createElement("div");
+      label.className = "y-axis-label";
+      label.style.position = "absolute";
+      label.style.left = "-30px";
+      label.style.bottom = (i * 20) + "%";
+      label.textContent = pct.toFixed(1) + "%";
+      plot.appendChild(label);
+    }
+
+    for (let i = 0; i <= 5; i++) {
+      const dur = (i / 5) * maxDur;
+      const label = document.createElement("div");
+      label.className = "x-axis-label";
+      label.style.position = "absolute";
+      label.style.left = (i * 20) + "%";
+      label.style.bottom = "-20px";
+      label.style.transform = "translateX(-50%)";
+      label.textContent = dur.toFixed(1) + "yr";
+      plot.appendChild(label);
+    }
+
+    funds.forEach(f => {
+      const xPct = (f.duration / maxDur) * 100;
+      const yPct = (f.statedYield / maxYield) * 100;
+      const point = document.createElement("div");
+      point.className = `scatter-point ${f.stateTax.toLowerCase()}`;
+      point.style.left = xPct + "%";
+      point.style.bottom = yPct + "%";
+      point.dataset.ticker = f.ticker;
+
+      const tooltip = document.createElement("div");
+      tooltip.className = "tooltip";
+      tooltip.innerHTML = `
+        <div style="font-weight:600; margin-bottom:4px;">${f.ticker} — ${f.issuer}</div>
+        <div>Stated: ${f.statedYield.toFixed(2)}%</div>
+        <div>After-Tax: ${f.afterTax.toFixed(2)}%</div>
+        <div>Duration: ${f.duration.toFixed(1)}yr</div>
+        <div>Tax: ${f.stateTax}</div>
+        <div>Savings: ${f.taxSavings.toFixed(2)}%</div>
+        <div>Tax Drag: ${f.taxDrag.toFixed(1)}%</div>
+        <div style="margin-top:4px; color:var(--accent);"><a href="${f.source}" target="_blank" style="color:inherit; text-decoration:underline;">View issuer page</a></div>
+      `;
+      point.appendChild(tooltip);
+
+      point.addEventListener("click", () => {
+        window.open(f.source, "_blank");
+      });
+
+      plot.appendChild(point);
+
+      const label = document.createElement("div");
+      label.className = "point-label";
+      label.style.left = (xPct + 8) + "%";
+      label.style.bottom = yPct + "%";
+      label.textContent = f.ticker;
+      plot.appendChild(label);
+    });
+  }
+
+  // === TABLE ===
+  function priceCell(ticker) {
+    const q = PX[ticker];
+    if (!q || typeof q.last !== "number") return '<span class="px-cell" style="color:var(--border)">—</span>';
+    const cls = (q.chg != null && q.chg < 0) ? "dn" : (q.chg != null ? "up" : "");
+    const chg = (q.pct != null && isFinite(q.pct))
+      ? ` <span class="${cls}">${q.pct >= 0 ? "+" : ""}${q.pct.toFixed(2)}%</span>`
+      : "";
+    return `<span class="px-cell">$${q.last.toFixed(2)}${chg}</span>`;
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById("tableBody");
+    tbody.innerHTML = "";
+    funds.forEach(f => {
+      const tr = document.createElement("tr");
+      const taxClass = f.stateTax === "Exempt" ? "badge-exempt" : f.stateTax === "Partial" ? "badge-partial" : f.stateTax === "Mixed" ? "badge-mixed" : "badge-taxable";
+      const staleClass = f.isStale ? " style='opacity:0.6'" : "";
+      f.price = (PX[f.ticker] && PX[f.ticker].last != null) ? PX[f.ticker].last : -1;
+      tr.innerHTML = `
+        <td class="ticker"${staleClass}><a href="${f.source}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;border-bottom:1px dotted var(--border)">${f.ticker}</a></td>
+        <td class="issuer"${staleClass}>${f.issuer}</td>
+        <td${staleClass}>${priceCell(f.ticker)}</td>
+        <td${staleClass}>${f.statedYield.toFixed(2)}%</td>
+        <td${staleClass}>${f.afterTax.toFixed(2)}%</td>
+        <td${staleClass}>${f.taxSavings.toFixed(2)}%</td>
+        <td${staleClass}>${f.duration.toFixed(1)}</td>
+        <td${staleClass}><span class="badge ${taxClass}">${f.stateTax}</span></td>
+        <td${staleClass}>${f.asOf}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderTape() {
+    const el = document.getElementById("tape");
+    if (!el) return;
+    el.innerHTML = TAPE_SYMS.map(s => {
+      let q = PX[s.id];
+      let raw = q ? q.last : null;
+      if (raw != null && (s.id === "^TNX" || s.id === "^FVX" || s.id === "^TYX" || s.id === "^IRX") && raw > 25) raw = raw / 10;
+      let val = "—", cls = "blank";
+      if (raw != null && isFinite(raw)) {
+        cls = "";
+        val = s.id.startsWith("^") ? (raw.toFixed(2) + "%") : ("$" + raw.toFixed(2));
+      }
+      let chg = "";
+      if (q && q.pct != null && isFinite(q.pct)) {
+        const c = q.pct >= 0 ? "up" : "dn";
+        chg = `<div class="tape-lab ${c}" style="margin-top:0.2rem;text-transform:none">${q.pct >= 0 ? "+" : ""}${q.pct.toFixed(2)}%</div>`;
+      }
+      return `<div class="tape-tile"><div class="tape-lab">${s.lab}</div><div class="tape-val ${cls}">${val}</div>${chg}</div>`;
+    }).join("");
+  }
+
+  async function ensureBackend() {
+    if (API_BASE) return API_BASE;
+    const candidates = [];
+    if (location.protocol === "http:" || location.protocol === "https:") candidates.push(location.origin);
+    LOCAL_PORTS.forEach(port => candidates.push("http://127.0.0.1:" + port));
+    for (const base of candidates) {
+      try {
+        const ctl = new AbortController();
+        const tmo = setTimeout(() => ctl.abort(), 1500);
+        const r = await fetch(base + "/api/health", { signal: ctl.signal, cache: "no-store" });
+        clearTimeout(tmo);
+        if (!r.ok) continue;
+        const j = await r.json();
+        if (j && (j.ok || j.status === "ok")) { API_BASE = base; return base; }
+      } catch (e) {}
+    }
+    return null;
+  }
+
+  async function pullLivePrices() {
+    const note = document.getElementById("feedNote");
+    const btn = document.getElementById("refreshBtn");
+    const base = await ensureBackend();
+    const syms = new Set(TAPE_SYMS.map(s => s.id));
+    funds.forEach(f => syms.add(f.ticker));
+    const list = [...syms];
+    if (!base) {
+      if (note) note.innerHTML = "No local backend — stated yields only. Run <code>python3 server.py</code> for live prices (port 8770).";
+      renderTape();
+      return false;
+    }
+    if (btn) { btn.classList.add("loading"); btn.textContent = "Refreshing…"; }
+    try {
+      const r = await fetch(base + "/api/quotes?symbols=" + encodeURIComponent(list.join(",")), { cache: "no-store" });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const j = await r.json();
+      const quotes = j.quotes || {};
+      Object.keys(quotes).forEach(k => { PX[k] = quotes[k]; });
+      if (note) {
+        note.innerHTML = `Live prices via <code>${base.replace("http://","")}</code> · ${j.returned || Object.keys(quotes).length}/${list.length} · yields remain issuer as-of prints · ${new Date().toLocaleTimeString()}`;
+      }
+      const last = document.getElementById("lastUpdated");
+      if (last) last.textContent = new Date().toLocaleTimeString() + " · prices live";
+      document.getElementById("statusBadge")?.querySelector(".status-dot")?.classList.remove("stale");
+      renderTape();
+      return true;
+    } catch (e) {
+      if (note) note.textContent = "Price pull failed — " + e.message;
+      return false;
+    } finally {
+      if (btn) { btn.classList.remove("loading"); btn.textContent = "Refresh Data"; }
+    }
+  }
+
+
+  // === DURATION LADDER ===
+  function renderLadder() {
+    const buckets = [
+      { name: "0-2 Year", range: "Ultra-Short to Short", min: 0, max: 2 },
+      { name: "2-5 Year", range: "Short to Intermediate", min: 2, max: 5 },
+      { name: "5-10 Year", range: "Intermediate to Long", min: 5, max: 10 },
+      { name: "10+ Year", range: "Long to Ultra-Long", min: 10, max: 999 },
+    ];
+
+    let html = "";
+    buckets.forEach(b => {
+      const bucketFunds = funds.filter(f => f.duration >= b.min && f.duration < b.max);
+      if (bucketFunds.length === 0) return;
+
+      const avgYield = bucketFunds.reduce((s, f) => s + f.statedYield, 0) / bucketFunds.length;
+      const avgAfter = bucketFunds.reduce((s, f) => s + f.afterTax, 0) / bucketFunds.length;
+      const avgDur = bucketFunds.reduce((s, f) => s + f.duration, 0) / bucketFunds.length;
+      const tickers = bucketFunds.map(f => f.ticker).join(", ");
+
+      html += `
+        <div class="ladder-bucket">
+          <h4>${b.name} <span style="font-weight:400; color:var(--muted);">${b.range}</span></h4>
+          <div class="bucket-meta">
+            <div class="meta-item"><div class="label">Avg Yield</div><div class="val">${avgYield.toFixed(2)}%</div></div>
+            <div class="meta-item"><div class="label">Avg After-Tax</div><div class="val">${avgAfter.toFixed(2)}%</div></div>
+            <div class="meta-item"><div class="label">Avg Duration</div><div class="val">${avgDur.toFixed(1)}yr</div></div>
+            <div class="meta-item"><div class="label">Funds</div><div class="val">${bucketFunds.length}</div></div>
+            <div class="meta-item"><div class="label">Tickers</div><div class="val">${tickers}</div></div>
           </div>
         </div>
-      );
-    };
+      `;
+    });
 
-    const rootElement = document.getElementById('root');
-    const root = ReactDOM.createRoot(rootElement);
-    root.render(<FixedIncomeDashboard />);
-  </script>
+    document.getElementById("ladderBuckets").innerHTML = html;
+  }
+
+  // === RENDER ===
+  function render() {
+    updateFunds();
+    checkFreshness();
+    updateStatusBadge();
+    renderTape();
+    renderInsights();
+    if (currentMode === "scatter") {
+      renderScatter();
+      document.getElementById("scatterCard").style.display = "block";
+      document.getElementById("tableCard").style.display = "none";
+      document.getElementById("ladderCard").style.display = "none";
+    } else if (currentMode === "table") {
+      renderTable();
+      document.getElementById("scatterCard").style.display = "none";
+      document.getElementById("tableCard").style.display = "block";
+      document.getElementById("ladderCard").style.display = "none";
+    } else {
+      renderLadder();
+      document.getElementById("scatterCard").style.display = "none";
+      document.getElementById("tableCard").style.display = "none";
+      document.getElementById("ladderCard").style.display = "block";
+    }
+  }
+
+  // === EVENT LISTENERS ===
+  document.getElementById("stateRate").addEventListener("input", (e) => {
+    stateRate = parseFloat(e.target.value);
+    document.getElementById("stateRateValue").textContent = stateRate + "%";
+    render();
+  });
+
+  document.querySelectorAll(".mode-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentMode = btn.dataset.mode;
+      render();
+    });
+  });
+
+  document.getElementById("exportBtn").addEventListener("click", () => {
+    const csv = ["Ticker,Issuer,Stated Yield,After-Tax Yield,Tax Savings,Duration,State Tax,As Of"];
+    funds.forEach(f => {
+      csv.push(`${f.ticker},${f.issuer},${f.statedYield.toFixed(2)}%,${f.afterTax.toFixed(2)}%,${f.taxSavings.toFixed(2)}%,${f.duration.toFixed(1)},${f.stateTax},${f.asOf}`);
+    });
+    const blob = new Blob([csv.join("\n")], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "fixed-income-dashboard.csv";
+    a.click();
+  });
+
+  document.getElementById("refreshBtn").addEventListener("click", async () => {
+    await pullLivePrices();
+    render();
+  });
+
+  let sortState = {};
+  document.addEventListener("click", (e) => {
+    const th = e.target.closest("th[data-key]");
+    if (!th) return;
+    const key = th.getAttribute("data-key");
+    const type = th.getAttribute("data-type");
+    const current = sortState[key] || { dir: "asc" };
+    const newDir = current.dir === "asc" ? "desc" : "asc";
+    sortState[key] = { dir: newDir };
+    document.querySelectorAll("#yieldTable thead th").forEach(h => h.classList.remove("sorted-asc", "sorted-desc"));
+    th.classList.add(newDir === "asc" ? "sorted-asc" : "sorted-desc");
+    const sorted = [...funds].sort((a, b) => {
+      let av = a[key], bv = b[key];
+      if (type === "number") { av = parseFloat(av); bv = parseFloat(bv); }
+      if (av < bv) return newDir === "asc" ? -1 : 1;
+      if (av > bv) return newDir === "asc" ? 1 : -1;
+      return 0;
+    });
+    funds.length = 0;
+    funds.push(...sorted);
+    renderTable();
+  });
+
+  // === AUTO-REFRESH: prices every 5 min; yield as-of every 15 min ===
+  setInterval(async () => {
+    await pullLivePrices();
+    render();
+  }, 5 * 60 * 1000);
+
+  setInterval(() => {
+    checkFreshness();
+    updateStatusBadge();
+  }, 15 * 60 * 1000);
+
+  (async function boot() {
+    render();
+    await pullLivePrices();
+    render();
+  })();
+</script>
 </body>
 </html>
