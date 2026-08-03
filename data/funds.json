@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-07-31T15:17:04Z",
+  "updatedAt": "2026-08-03T15:42:09Z",
   "notes": "statedYield is best-effort automated (Yahoo fund yield when available) or last issuer print. Always confirm before trading.",
   "funds": [
     {
@@ -14,7 +14,7 @@
       "source": "https://funds.alphaarchitect.com/boxetf/",
       "yieldSource": "issuer",
       "price": 117.69,
-      "priceAsOf": "2026-07-31"
+      "priceAsOf": "2026-08-03"
     },
     {
       "ticker": "SGOV",
@@ -22,12 +22,12 @@
       "statedYield": 3.85,
       "duration": 0.1,
       "stateTax": "Exempt",
-      "asOf": "2026-07-31",
+      "asOf": "2026-08-03",
       "exemptPct": 1.0,
       "source": "https://www.ishares.com/us/products/314116",
       "yieldSource": "yahoo",
-      "price": 100.71,
-      "priceAsOf": "2026-07-31",
+      "price": 100.4266,
+      "priceAsOf": "2026-08-03",
       "yieldField": "yield"
     },
     {
@@ -36,12 +36,12 @@
       "statedYield": 3.73,
       "duration": 0.5,
       "stateTax": "Exempt",
-      "asOf": "2026-07-31",
+      "asOf": "2026-08-03",
       "exemptPct": 1.0,
       "source": "https://www.goldmansachs.com",
       "yieldSource": "yahoo",
-      "price": 100.18,
-      "priceAsOf": "2026-07-31",
+      "price": 99.885,
+      "priceAsOf": "2026-08-03",
       "yieldField": "yield"
     },
     {
@@ -50,12 +50,12 @@
       "statedYield": 3.84,
       "duration": 0.0,
       "stateTax": "Exempt",
-      "asOf": "2026-07-31",
+      "asOf": "2026-08-03",
       "exemptPct": 1.0,
       "source": "https://www.wisdomtree.com",
       "yieldSource": "yahoo",
-      "price": 50.37,
-      "priceAsOf": "2026-07-31",
+      "price": 50.3836,
+      "priceAsOf": "2026-08-03",
       "yieldField": "yield"
     },
     {
@@ -64,12 +64,12 @@
       "statedYield": 4.05,
       "duration": 0.94,
       "stateTax": "Exempt",
-      "asOf": "2026-07-31",
+      "asOf": "2026-08-03",
       "exemptPct": 1.0,
       "source": "https://bondbloxxetf.com",
       "yieldSource": "yahoo",
-      "price": 49.365,
-      "priceAsOf": "2026-07-31",
+      "price": 49.225,
+      "priceAsOf": "2026-08-03",
       "yieldField": "yield"
     },
     {
@@ -78,12 +78,12 @@
       "statedYield": 4.04,
       "duration": 2.0,
       "stateTax": "Exempt",
-      "asOf": "2026-07-31",
+      "asOf": "2026-08-03",
       "exemptPct": 1.0,
       "source": "https://bondbloxxetf.com",
       "yieldSource": "yahoo",
-      "price": 48.835,
-      "priceAsOf": "2026-07-31",
+      "price": 48.725,
+      "priceAsOf": "2026-08-03",
       "yieldField": "yield"
     },
     {
@@ -92,12 +92,12 @@
       "statedYield": 4.0,
       "duration": 3.0,
       "stateTax": "Exempt",
-      "asOf": "2026-07-31",
+      "asOf": "2026-08-03",
       "exemptPct": 1.0,
       "source": "https://bondbloxxetf.com",
       "yieldSource": "yahoo",
-      "price": 48.7664,
-      "priceAsOf": "2026-07-31",
+      "price": 48.655,
+      "priceAsOf": "2026-08-03",
       "yieldField": "yield"
     },
     {
@@ -106,12 +106,12 @@
       "statedYield": 3.4,
       "duration": 4.12,
       "stateTax": "Exempt",
-      "asOf": "2026-07-31",
+      "asOf": "2026-08-03",
       "exemptPct": 1.0,
       "source": "https://fpa.com",
       "yieldSource": "yahoo",
-      "price": 44.935,
-      "priceAsOf": "2026-07-31",
+      "price": 44.6501,
+      "priceAsOf": "2026-08-03",
       "yieldField": "yield"
     },
     {
@@ -120,12 +120,12 @@
       "statedYield": 3.8,
       "duration": 5.0,
       "stateTax": "Exempt",
-      "asOf": "2026-07-31",
+      "asOf": "2026-08-03",
       "exemptPct": 1.0,
       "source": "https://bondbloxxetf.com",
       "yieldSource": "yahoo",
-      "price": 48.0901,
-      "priceAsOf": "2026-07-31",
+      "price": 48.04,
+      "priceAsOf": "2026-08-03",
       "yieldField": "yield"
     },
     {
@@ -134,12 +134,12 @@
       "statedYield": 4.08,
       "duration": 7.0,
       "stateTax": "Exempt",
-      "asOf": "2026-07-31",
+      "asOf": "2026-08-03",
       "exemptPct": 1.0,
       "source": "https://bondbloxxetf.com",
       "yieldSource": "yahoo",
-      "price": 46.3975,
-      "priceAsOf": "2026-07-31",
+      "price": 46.38,
+      "priceAsOf": "2026-08-03",
       "yieldField": "yield"
     },
     {
@@ -148,12 +148,12 @@
       "statedYield": 3.74,
       "duration": 3.0,
       "stateTax": "Taxable",
-      "asOf": "2026-07-31",
+      "asOf": "2026-08-03",
       "exemptPct": 0.0,
       "source": "https://www.cambriafunds.com",
       "yieldSource": "yahoo",
-      "price": 25.31,
-      "priceAsOf": "2026-07-31",
+      "price": 25.325,
+      "priceAsOf": "2026-08-03",
       "yieldField": "yield"
     },
     {
@@ -162,12 +162,12 @@
       "statedYield": 3.01,
       "duration": 3.0,
       "stateTax": "Mixed",
-      "asOf": "2026-07-31",
+      "asOf": "2026-08-03",
       "exemptPct": 0.5,
       "source": "https://funds.alphaarchitect.com",
       "yieldSource": "yahoo",
-      "price": 24.4,
-      "priceAsOf": "2026-07-31",
+      "price": 24.345,
+      "priceAsOf": "2026-08-03",
       "yieldField": "yield"
     },
     {
@@ -176,12 +176,12 @@
       "statedYield": 3.63,
       "duration": 5.0,
       "stateTax": "Exempt",
-      "asOf": "2026-07-31",
+      "asOf": "2026-08-03",
       "exemptPct": 1.0,
       "source": "https://www.ishares.com",
       "yieldSource": "yahoo",
-      "price": 116.355,
-      "priceAsOf": "2026-07-31",
+      "price": 116.24,
+      "priceAsOf": "2026-08-03",
       "yieldField": "yield"
     },
     {
@@ -190,12 +190,12 @@
       "statedYield": 3.97,
       "duration": 5.7,
       "stateTax": "Exempt",
-      "asOf": "2026-07-31",
+      "asOf": "2026-08-03",
       "exemptPct": 1.0,
       "source": "https://www.ishares.com",
       "yieldSource": "yahoo",
-      "price": 97.33,
-      "priceAsOf": "2026-07-31",
+      "price": 97.275,
+      "priceAsOf": "2026-08-03",
       "yieldField": "yield"
     },
     {
@@ -204,12 +204,12 @@
       "statedYield": 4.36,
       "duration": 10.0,
       "stateTax": "Exempt",
-      "asOf": "2026-07-31",
+      "asOf": "2026-08-03",
       "exemptPct": 1.0,
       "source": "https://bondbloxxetf.com",
       "yieldSource": "yahoo",
-      "price": 44.21,
-      "priceAsOf": "2026-07-31",
+      "price": 44.245,
+      "priceAsOf": "2026-08-03",
       "yieldField": "yield"
     },
     {
@@ -218,12 +218,12 @@
       "statedYield": 4.59,
       "duration": 12.3,
       "stateTax": "Exempt",
-      "asOf": "2026-07-31",
+      "asOf": "2026-08-03",
       "exemptPct": 1.0,
       "source": "https://www.ishares.com",
       "yieldSource": "yahoo",
-      "price": 23.54,
-      "priceAsOf": "2026-07-31",
+      "price": 23.4099,
+      "priceAsOf": "2026-08-03",
       "yieldField": "yield"
     },
     {
@@ -232,12 +232,12 @@
       "statedYield": 4.53,
       "duration": 15.3,
       "stateTax": "Exempt",
-      "asOf": "2026-07-31",
+      "asOf": "2026-08-03",
       "exemptPct": 1.0,
       "source": "https://www.ishares.com",
       "yieldSource": "yahoo",
-      "price": 82.14,
-      "priceAsOf": "2026-07-31",
+      "price": 82.345,
+      "priceAsOf": "2026-08-03",
       "yieldField": "yield"
     },
     {
@@ -246,12 +246,12 @@
       "statedYield": 5.03,
       "duration": 25.0,
       "stateTax": "Exempt",
-      "asOf": "2026-07-31",
+      "asOf": "2026-08-03",
       "exemptPct": 1.0,
       "source": "https://www.pimco.com",
       "yieldSource": "yahoo",
-      "price": 58.095,
-      "priceAsOf": "2026-07-31",
+      "price": 58.6538,
+      "priceAsOf": "2026-08-03",
       "yieldField": "yield"
     }
   ],
