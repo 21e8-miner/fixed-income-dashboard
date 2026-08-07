@@ -1,9 +1,8 @@
-# fixed-income-dashboard → **superseded**
+﻿# fixed-income-dashboard → **ARCHIVED / superseded**
 
-This project has been **consolidated into [taxyield-pro](https://github.com/21e8-miner/taxyield-pro)**.
+> **This repository is archived.** Read-only history.
+>
+> Canonical desk: **[taxyield-pro](https://github.com/21e8-miner/taxyield-pro)**  
+> Live: **[TaxYield Pro on GitHub Pages](https://21e8-miner.github.io/taxyield-pro/)**
 
-**→ [Open TaxYield Pro](https://21e8-miner.github.io/taxyield-pro/)**
-
-Use that repo for the after-tax yield vs duration desk (full curve book, live marks, duration filter, weekday yield bot).
-
-This repository is kept for history only.
+Do not open PRs here. All FI desk work continues in taxyield-pro.
